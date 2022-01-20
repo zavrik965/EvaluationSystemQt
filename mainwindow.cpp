@@ -6,6 +6,7 @@
 #include <QColor>
 #include <QDir>
 #include <QFileInfo>
+#include "coder.cpp"
 
 using namespace std;
 
@@ -15,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     init();
+    socket = new QTcpSocket();
 }
 
 MainWindow::~MainWindow()
@@ -235,20 +237,45 @@ void MainWindow::on_login_btn_triggered()
     LoginDialog * login_form = new LoginDialog();
     int answer = login_form->exec();
     if(answer == QDialog::Accepted){
-        if(login_form->get_login() == "zaz965@stm32f0.ru" && login_form->get_password() == "zazik965"){
+        //******************
+        //Connect to server
+        QString home_path = QDir::homePath();
+        QFile file;
+        file.setFileName(home_path + "/.СистемаЗачётов/number");
+        file.open(QIODevice::ReadOnly | QIODevice::Text);
+        long long number = file.readAll().toLongLong();
+        file.close();
+        QString login_encode = encode(login_form->get_login(), number);
+        QString password_encode = encode(login_form->get_password(), number);
+        socket->connectToHost("alexavr.ru", 25555, QTcpSocket::ReadWrite);
+        socket->write(QString("com://connect " + login_encode + "&&" + password_encode).toLocal8Bit());
+        socket->waitForReadyRead(100);
+        QByteArray data = socket->readAll();
+        //
+        //******************
+        if(data == "ok"){
+            number = gen(number);
+            file.open(QIODevice::WriteOnly | QIODevice::Text);
+            file.write(QString::number(number).toLocal8Bit());
+            file.close();
+            socket->waitForReadyRead(100);
+            data = socket->readAll();
+            person_type = data.split(' ')[0];
+            class_num = Translit->fromTranslit(data.split(' ')[1]);
             login = login_form->get_login();
             username = "Заручевский\nАлександр";
-            class_num = "10Б";
             index_theme = 0;
             on_change_theme_triggered();
             ui->login_btn->setText("Сменить аккаунт");
             login_flag = true;
             delete login_form;
         }
+        socket->close();
     }
 
     if(login_flag){
         login_flag = false;
+
         //******************
         //import files from ftp
         //******************

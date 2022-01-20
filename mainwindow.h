@@ -14,6 +14,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QActionGroup>
+#include <QtNetwork/QTcpSocket>
 #include "translitter.h"
 
 QT_BEGIN_NAMESPACE
@@ -36,6 +37,8 @@ private:
 
     bool tray_access=true;
     void init();
+    QTcpSocket * socket;
+
     QSystemTrayIcon *trayIcon;
     Translitter * Translit = new Translitter();
 
@@ -43,6 +46,7 @@ private:
     QString login="";
     QString username="";
     QString class_num="";
+    QString person_type="";
 
     ftplib *ftp = new ftplib();
     int index_theme=1;
