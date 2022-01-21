@@ -81,7 +81,10 @@ private:
     QString current_chat="";
     QStringList current_needed_files = {};
 
+    QTcpSocket *sock_send = new QTcpSocket();
+    QTcpSocket *sock = new QTcpSocket();
     void logining();
+    void sender(QTcpSocket * socket);
 
 private slots:
     void on_exit_triggered();
@@ -104,6 +107,7 @@ private slots:
 
     void fullClose();
 
+    void reciver();
 
     void on_login_btn_triggered();
 };

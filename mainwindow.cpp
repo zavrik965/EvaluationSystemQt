@@ -248,8 +248,9 @@ void MainWindow::on_login_btn_triggered()
         QString login_encode = encode(login_form->get_login(), number);
         QString password_encode = encode(login_form->get_password(), number);
         socket->connectToHost("alexavr.ru", 25555, QTcpSocket::ReadWrite);
+        socket->waitForConnected();
         socket->write(QString("com://connect " + login_encode + "&&" + password_encode).toLocal8Bit());
-        socket->waitForReadyRead(100);
+        socket->waitForReadyRead(5000);
         QByteArray data = socket->readAll();
         //
         //******************
@@ -258,7 +259,7 @@ void MainWindow::on_login_btn_triggered()
             file.open(QIODevice::WriteOnly | QIODevice::Text);
             file.write(QString::number(number).toLocal8Bit());
             file.close();
-            socket->waitForReadyRead(100);
+            socket->waitForReadyRead(5000);
             data = socket->readAll();
             person_type = data.split(' ')[0];
             class_num = Translit->fromTranslit(data.split(' ')[1]);
@@ -269,6 +270,29 @@ void MainWindow::on_login_btn_triggered()
             ui->login_btn->setText("Сменить аккаунт");
             login_flag = true;
             delete login_form;
+            sock->connectToHost("alexavr.ru", 25545, QTcpSocket::ReadWrite);
+            sock->waitForConnected();
+            sock->write(QString("recv&" + login).toLocal8Bit());
+            sock->waitForBytesWritten();
+            sock->waitForReadyRead();
+            data = sock->readAll();
+            qWarning() << "OK?" <<  data;
+            if(data != "Ok"){
+                trayIcon->showMessage("Система зачётов", "Не удалось подключится к серверу сообщений", QIcon(":/icons/pic/icon.png"));
+            } else{
+                sock_send->connectToHost("alexavr.ru", 25545, QTcpSocket::ReadWrite);
+                sock_send->waitForConnected();
+                sock_send->write(QString("send&" + login).toLocal8Bit());
+                sock_send->waitForBytesWritten();
+                sock_send->waitForReadyRead();
+                data = sock_send->readAll();
+                qWarning() << "OK?" <<  data;
+                if(data != "Ok"){
+                    trayIcon->showMessage("Система зачётов", "Не удалось подключится к серверу сообщений", QIcon(":/icons/pic/icon.png"));
+                } else{
+                    connect(sock, SIGNAL(readyRead()), this, SLOT(reciver()));
+                }
+            }
         }
         socket->close();
     }
@@ -331,6 +355,21 @@ void MainWindow::on_login_btn_triggered()
          //******************
          //end import files from ftp
          //******************
+    }
+}
+
+void MainWindow::reciver(){
+    QByteArray data;
+    QString user;
+    data = sock->readAll();
+    if(data != "ping@!#"){
+        qWarning() << data;
+        user = data.split('%')[0];
+        user = user.sliced(0, user.size() - 1);
+        qWarning() << user;
+        if(data.split('%').size() >= 2){
+            qWarning() << data.sliced(user.size() + 3);
+        }
     }
 }
 
