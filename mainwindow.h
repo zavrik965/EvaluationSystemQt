@@ -76,6 +76,7 @@ private:
 
     QJsonArray lessons_data;
     QJsonObject lessons;
+    QString current_lesson="";
     QString current_description="";
     QString current_answer_text="";
     QString current_chat="";

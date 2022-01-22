@@ -39,43 +39,20 @@
       <property name="sizeConstraint">
        <enum>QLayout::SetDefaultConstraint</enum>
       </property>
-      <item row="1" column="4" rowspan="13" colspan="2">
-       <widget class="QListWidget" name="excercises">
+      <item row="9" column="10" rowspan="2" colspan="2">
+       <widget class="QPushButton" name="mes_btn">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3" rowspan="14">
-       <widget class="Line" name="line">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-       </widget>
-      </item>
-      <item row="9" column="10">
-       <widget class="QPushButton" name="upload_btn">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="mouseTracking">
-         <bool>false</bool>
-        </property>
-        <property name="autoFillBackground">
-         <bool>false</bool>
         </property>
         <property name="text">
          <string/>
         </property>
         <property name="icon">
-         <iconset>
-          <normaloff>:/icons/pic/upload.jpg</normaloff>:/icons/pic/upload.jpg</iconset>
+         <iconset resource="res.qrc">
+          <normaloff>:/icons/pic/mes_send.png</normaloff>:/icons/pic/mes_send.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -83,25 +60,51 @@
           <height>50</height>
          </size>
         </property>
-        <property name="autoRepeatDelay">
-         <number>300</number>
-        </property>
-        <property name="autoDefault">
-         <bool>false</bool>
-        </property>
-        <property name="default">
-         <bool>false</bool>
+        <property name="shortcut">
+         <string>Ctrl+Return</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="9" rowspan="11">
-       <widget class="Line" name="line_2">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
+      <item row="0" column="0" rowspan="2" colspan="2">
+       <widget class="QLabel" name="avatar">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap resource="res.qrc">:/icons/pic/avatar_img.jpg</pixmap>
         </property>
        </widget>
       </item>
-      <item row="0" column="10">
+      <item row="1" column="11">
+       <widget class="QPushButton" name="code_viewer_btn">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="res.qrc">
+          <normaloff>:/icons/pic/code.png</normaloff>:/icons/pic/code.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>50</width>
+          <height>50</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="11">
        <widget class="QPushButton" name="description_btn">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -124,7 +127,7 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="10">
+      <item row="2" column="11">
        <widget class="QPushButton" name="chat_viewer_btn">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -147,7 +150,34 @@
         </property>
        </widget>
       </item>
-      <item row="10" column="10">
+      <item row="2" column="0" colspan="2">
+       <widget class="QLabel" name="username">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Имя
+Фамилия</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="class_label">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Класс:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="11">
        <widget class="QPushButton" name="download_btn">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -185,20 +215,43 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="10">
-       <widget class="QPushButton" name="code_viewer_btn">
+      <item row="9" column="8" rowspan="2" colspan="2">
+       <widget class="QTextEdit" name="textEdit">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Ignored">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="10" rowspan="8">
+       <widget class="Line" name="line_2">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="11">
+       <widget class="QPushButton" name="upload_btn">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="mouseTracking">
+         <bool>false</bool>
+        </property>
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
         <property name="text">
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="res.qrc">
-          <normaloff>:/icons/pic/code.png</normaloff>:/icons/pic/code.png</iconset>
+         <iconset>
+          <normaloff>:/icons/pic/upload.jpg</normaloff>:/icons/pic/upload.jpg</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -206,10 +259,33 @@
           <height>50</height>
          </size>
         </property>
+        <property name="autoRepeatDelay">
+         <number>300</number>
+        </property>
+        <property name="autoDefault">
+         <bool>false</bool>
+        </property>
+        <property name="default">
+         <bool>false</bool>
+        </property>
        </widget>
       </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="class_label">
+      <item row="0" column="3" rowspan="11">
+       <widget class="Line" name="line">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="8" colspan="4">
+       <widget class="Line" name="line_3">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLabel" name="class_num">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
           <horstretch>0</horstretch>
@@ -217,54 +293,41 @@
          </sizepolicy>
         </property>
         <property name="text">
-         <string>Класс:</string>
+         <string/>
         </property>
        </widget>
       </item>
-      <item row="12" column="9" rowspan="2" colspan="2">
-       <widget class="QPushButton" name="mes_btn">
+      <item row="4" column="0" rowspan="7" colspan="2">
+       <spacer name="verticalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="1" column="4" rowspan="10" colspan="2">
+       <widget class="QListWidget" name="excercises">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="icon">
-         <iconset resource="res.qrc">
-          <normaloff>:/icons/pic/mes_send.png</normaloff>:/icons/pic/mes_send.png</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>50</width>
-          <height>50</height>
-         </size>
-        </property>
-        <property name="shortcut">
-         <string>Ctrl+Return</string>
-        </property>
        </widget>
       </item>
-      <item row="11" column="7" colspan="4">
-       <widget class="Line" name="line_3">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="7" rowspan="11" colspan="2">
-       <widget class="QTextBrowser" name="description_field"/>
-      </item>
-      <item row="0" column="6" rowspan="14">
+      <item row="0" column="6" rowspan="11">
        <widget class="Line" name="line_4">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
         </property>
        </widget>
       </item>
-      <item row="4" column="10" rowspan="5">
+      <item row="4" column="11" rowspan="2">
        <spacer name="verticalSpacer">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
@@ -305,70 +368,28 @@ color: rgb(255, 255, 255);</string>
         </property>
        </widget>
       </item>
-      <item row="12" column="7" rowspan="2" colspan="2">
-       <widget class="QTextEdit" name="textEdit">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Ignored">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QLabel" name="class_num">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0" colspan="2">
-       <widget class="QLabel" name="username">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Имя
-Фамилия</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0" rowspan="10" colspan="2">
-       <spacer name="verticalSpacer_2">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>20</width>
-          <height>40</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="0" column="0" rowspan="2" colspan="2">
-       <widget class="QLabel" name="avatar">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="pixmap">
-         <pixmap resource="res.qrc">:/icons/pic/avatar_img.jpg</pixmap>
-        </property>
+      <item row="0" column="8" rowspan="8" colspan="2">
+       <widget class="QWidget" name="widget" native="true">
+        <widget class="QTextBrowser" name="description_field">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>541</width>
+           <height>531</height>
+          </rect>
+         </property>
+        </widget>
+        <widget class="QListWidget" name="chat_viewer">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>541</width>
+           <height>531</height>
+          </rect>
+         </property>
+        </widget>
        </widget>
       </item>
      </layout>

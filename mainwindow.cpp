@@ -7,6 +7,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include "coder.cpp"
+#include <QTime>
 
 using namespace std;
 
@@ -195,23 +196,29 @@ void MainWindow::on_excercises_currentRowChanged(int currentRow)
 void MainWindow::on_description_btn_clicked()
 {
     ui->description_field->setText(current_description);
+    ui->description_field->show();
+    ui->chat_viewer->hide();
 }
 
 
 void MainWindow::on_code_viewer_btn_clicked()
 {
     ui->description_field->setText(current_answer_text);
+    ui->description_field->show();
+    ui->chat_viewer->hide();
 }
 
 
 void MainWindow::on_chat_viewer_btn_clicked()
 {
-    ui->description_field->setText(current_chat);
+    ui->description_field->hide();
+    ui->chat_viewer->show();
 }
 
 void MainWindow::classes_event(QAction * action)
 {
     lessons_data = lessons[action->text()].toArray();
+    current_lesson = action->text();
     current_description = "";
     current_answer_text = "";
     current_chat = "";
@@ -272,7 +279,7 @@ void MainWindow::on_login_btn_triggered()
             delete login_form;
             sock->connectToHost("alexavr.ru", 25545, QTcpSocket::ReadWrite);
             sock->waitForConnected();
-            sock->write(QString("recv&" + login).toLocal8Bit());
+            sock->write(QString("recv&" + person_type + "_" + login + "_" + Translit->toTranslit(class_num)).toLocal8Bit());
             sock->waitForBytesWritten();
             sock->waitForReadyRead();
             data = sock->readAll();
@@ -282,7 +289,7 @@ void MainWindow::on_login_btn_triggered()
             } else{
                 sock_send->connectToHost("alexavr.ru", 25545, QTcpSocket::ReadWrite);
                 sock_send->waitForConnected();
-                sock_send->write(QString("send&" + login).toLocal8Bit());
+                sock_send->write(QString("send&" + person_type + "_" + login + "_" + Translit->toTranslit(class_num)).toLocal8Bit());
                 sock_send->waitForBytesWritten();
                 sock_send->waitForReadyRead();
                 data = sock_send->readAll();
@@ -361,15 +368,35 @@ void MainWindow::on_login_btn_triggered()
 void MainWindow::reciver(){
     QByteArray data;
     QString user;
+    QFile file;
+    QString home_path = QDir::homePath();
+    QTime time = QTime::currentTime();
+
     data = sock->readAll();
     if(data != "ping@!#"){
-        qWarning() << data;
+        //qWarning() << data;
         user = data.split('%')[0];
         user = user.sliced(0, user.size() - 1);
-        qWarning() << user;
-        if(data.split('%').size() >= 2){
-            qWarning() << data.sliced(user.size() + 3);
+        QString lesson = data.split('%')[1];
+        lesson = lesson.sliced(1, lesson.size() - 2);
+        //qWarning() << user << lesson;
+        if(data.split('%').size() >= 3){
+            //qWarning() << home_path + "/.СистемаЗачётов/.history/chat_" + user + "_" + lesson + ".hs";
+            file.setFileName(home_path + "/.СистемаЗачётов/.history/chat_" + user + "_" + lesson + ".hs");
+            file.open(QIODevice::Append | QIODevice::Text);
+
+            //qWarning() << Translit->toTranslit(ui->excercises->currentItem()->text()) << Translit->toTranslit(current_lesson);
+            file.write(QString(time.toString("hh:mm:ss") + ":&" + data.sliced(user.size() + lesson.size() + 7) + "\n").toLocal8Bit());
+            if(ui->excercises->count() != 0){
+                if(lesson.split('@')[0] == Translit->toTranslit(ui->excercises->currentItem()->text()) && lesson.split('@')[1] == Translit->toTranslit(current_lesson)){
+                    ui->chat_viewer->addItem(user + ": " + data.sliced(user.size() + lesson.size() + 7));
+                }
+            } else {
+                trayIcon->showMessage("Система зачётов", "Новое сообщение от пользователя " + Translit->fromTranslit(user.split("_")[1]), QIcon(":/icons/pic/icon.png"));
+            }
         }
     }
+    file.close();
+
 }
 
