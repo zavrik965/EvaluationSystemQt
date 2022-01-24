@@ -86,6 +86,8 @@ private:
     QTcpSocket *sock = new QTcpSocket();
     void logining();
     void sender(QTcpSocket * socket);
+    void reconnectingFTP();
+    void connectToMessageServer();
 
 private slots:
     void on_exit_triggered();
@@ -111,5 +113,6 @@ private slots:
     void reciver();
 
     void on_login_btn_triggered();
+    void on_reconnect_triggered();
 };
 #endif // MAINWINDOW_H

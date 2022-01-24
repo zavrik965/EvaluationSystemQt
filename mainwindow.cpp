@@ -53,6 +53,8 @@ void MainWindow::init()
     ui->description_field->setFontPointSize(14);
     ui->title_list->setFont(QFont("", 18));
     ui->excercises->setSpacing(2);
+    ui->chat_viewer->hide();
+    ui->reconnect->setVisible(false);
 
     connect(ui->menu_2, SIGNAL(triggered(QAction*)), SLOT(classes_event(QAction*)));
 
@@ -190,6 +192,10 @@ void MainWindow::on_excercises_currentRowChanged(int currentRow)
     current_description = item.value("description").toString();
     current_needed_files = item.value("file").toString().split("&");
     ui->description_field->setText(item.value("description").toString());
+    ui->chat_viewer->clear();
+    ui->description_field->show();
+    ui->chat_viewer->hide();
+
 }
 
 
@@ -254,10 +260,11 @@ void MainWindow::on_login_btn_triggered()
         file.close();
         QString login_encode = encode(login_form->get_login(), number);
         QString password_encode = encode(login_form->get_password(), number);
+        qWarning() << login_encode;
         socket->connectToHost("alexavr.ru", 25555, QTcpSocket::ReadWrite);
         socket->waitForConnected();
         socket->write(QString("com://connect " + login_encode + "&&" + password_encode).toLocal8Bit());
-        socket->waitForReadyRead(5000);
+        socket->waitForReadyRead();
         QByteArray data = socket->readAll();
         //
         //******************
@@ -266,7 +273,7 @@ void MainWindow::on_login_btn_triggered()
             file.open(QIODevice::WriteOnly | QIODevice::Text);
             file.write(QString::number(number).toLocal8Bit());
             file.close();
-            socket->waitForReadyRead(5000);
+            socket->waitForReadyRead();
             data = socket->readAll();
             person_type = data.split(' ')[0];
             class_num = Translit->fromTranslit(data.split(' ')[1]);
@@ -276,7 +283,28 @@ void MainWindow::on_login_btn_triggered()
             on_change_theme_triggered();
             ui->login_btn->setText("Сменить аккаунт");
             login_flag = true;
+            ui->reconnect->setVisible(true);
             delete login_form;
+            connectToMessageServer();
+            reconnectingFTP();
+        }
+        socket->close();
+    }
+}
+
+void MainWindow::connectToMessageServer(){
+    QByteArray data;
+    if(login_flag){
+        sock_send->connectToHost("alexavr.ru", 25545, QTcpSocket::ReadWrite);
+        sock_send->waitForConnected();
+        sock_send->write(QString("send&" + person_type + "_" + login + "_" + Translit->toTranslit(class_num)).toLocal8Bit());
+        sock_send->waitForBytesWritten();
+        sock_send->waitForReadyRead();
+        data = sock_send->readAll();
+        qWarning() << "OK?" <<  data;
+        if(data != "Ok"){
+            trayIcon->showMessage("Система зачётов", "Не удалось подключится к серверу сообщений", QIcon(":/icons/pic/icon.png"));
+        } else{
             sock->connectToHost("alexavr.ru", 25545, QTcpSocket::ReadWrite);
             sock->waitForConnected();
             sock->write(QString("recv&" + person_type + "_" + login + "_" + Translit->toTranslit(class_num)).toLocal8Bit());
@@ -287,25 +315,14 @@ void MainWindow::on_login_btn_triggered()
             if(data != "Ok"){
                 trayIcon->showMessage("Система зачётов", "Не удалось подключится к серверу сообщений", QIcon(":/icons/pic/icon.png"));
             } else{
-                sock_send->connectToHost("alexavr.ru", 25545, QTcpSocket::ReadWrite);
-                sock_send->waitForConnected();
-                sock_send->write(QString("send&" + person_type + "_" + login + "_" + Translit->toTranslit(class_num)).toLocal8Bit());
-                sock_send->waitForBytesWritten();
-                sock_send->waitForReadyRead();
-                data = sock_send->readAll();
-                qWarning() << "OK?" <<  data;
-                if(data != "Ok"){
-                    trayIcon->showMessage("Система зачётов", "Не удалось подключится к серверу сообщений", QIcon(":/icons/pic/icon.png"));
-                } else{
-                    connect(sock, SIGNAL(readyRead()), this, SLOT(reciver()));
-                }
+                connect(sock, SIGNAL(readyRead()), this, SLOT(reciver()));
+                qWarning() << "sock_conected";
             }
         }
-        socket->close();
     }
-
+}
+void MainWindow::reconnectingFTP(){
     if(login_flag){
-        login_flag = false;
 
         //******************
         //import files from ftp
@@ -371,24 +388,23 @@ void MainWindow::reciver(){
     QFile file;
     QString home_path = QDir::homePath();
     QTime time = QTime::currentTime();
-
     data = sock->readAll();
+    qWarning() << data;
     if(data != "ping@!#"){
-        //qWarning() << data;
+        qWarning() << data;
         user = data.split('%')[0];
         user = user.sliced(0, user.size() - 1);
         QString lesson = data.split('%')[1];
         lesson = lesson.sliced(1, lesson.size() - 2);
-        //qWarning() << user << lesson;
         if(data.split('%').size() >= 3){
-            //qWarning() << home_path + "/.СистемаЗачётов/.history/chat_" + user + "_" + lesson + ".hs";
+            qWarning() << home_path + "/.СистемаЗачётов/.history/chat_" + user + "_" + lesson + ".hs";
             file.setFileName(home_path + "/.СистемаЗачётов/.history/chat_" + user + "_" + lesson + ".hs");
             file.open(QIODevice::Append | QIODevice::Text);
 
-            //qWarning() << Translit->toTranslit(ui->excercises->currentItem()->text()) << Translit->toTranslit(current_lesson);
             file.write(QString(time.toString("hh:mm:ss") + ":&" + data.sliced(user.size() + lesson.size() + 7) + "\n").toLocal8Bit());
             if(ui->excercises->count() != 0){
-                if(lesson.split('@')[0] == Translit->toTranslit(ui->excercises->currentItem()->text()) && lesson.split('@')[1] == Translit->toTranslit(current_lesson)){
+                if(lesson.split('@')[0] == Translit->toTranslit(current_lesson) && lesson.split('@')[1].replace("_", " ") == Translit->toTranslit(ui->excercises->currentItem()->text())){
+                    //qWarning() << Translit->toTranslit(ui->excercises->currentItem()->text()) << Translit->toTranslit(current_lesson) << lesson.split('@')[1].replace("_", " ") << lesson.split('@')[0];
                     ui->chat_viewer->addItem(user + ": " + data.sliced(user.size() + lesson.size() + 7));
                 }
             } else {
@@ -398,5 +414,17 @@ void MainWindow::reciver(){
     }
     file.close();
 
+}
+
+
+void MainWindow::on_reconnect_triggered()
+{
+    //sock_send->write("disconnect");
+    //sock_send->waitForBytesWritten();
+    disconnect(sock, SIGNAL(readyRead()), this, SLOT(reciver()));
+    sock_send->close();
+    sock->close();
+    reconnectingFTP();
+    connectToMessageServer();
 }
 
