@@ -8,6 +8,7 @@
 #include <QFileInfo>
 #include "coder.cpp"
 #include <QTime>
+#include <QScrollBar>
 
 using namespace std;
 
@@ -55,6 +56,7 @@ void MainWindow::init()
     ui->excercises->setSpacing(2);
     ui->chat_viewer->hide();
     ui->reconnect->setVisible(false);
+    ui->chat_viewer->setAutoScroll(true);
 
     connect(ui->menu_2, SIGNAL(triggered(QAction*)), SLOT(classes_event(QAction*)));
 
@@ -195,7 +197,39 @@ void MainWindow::on_excercises_currentRowChanged(int currentRow)
     ui->chat_viewer->clear();
     ui->description_field->show();
     ui->chat_viewer->hide();
-
+    QFile file;
+    QString home_path = QDir::homePath();
+    QString lesson = Translit->toTranslit(ui->excercises->currentItem()->text());
+    QDir dir(home_path + "/.СистемаЗачётов/.history/");
+    QFileInfoList list = dir.entryInfoList();
+    if(class_num == ""){
+        class_num = current_lesson.split('_')[1] + current_lesson.split('_')[2].toUpper();
+    }
+    foreach (QFileInfo finfo, list) {
+        QString name = finfo.fileName();
+        qWarning() << name;
+        qWarning() << name.split('_');
+        qWarning() << name.split('@') << Translit->toTranslit(class_num) << lesson.replace(" ", "_");
+        if(name.split('_').size() > 1 && name.split('_')[3] == Translit->toTranslit(class_num) && name.split('@')[1].split('.')[0] == lesson.replace(" ", "_")){
+            qWarning() << home_path + "/.СистемаЗачётов/.history/" + name;
+            file.setFileName(home_path + "/.СистемаЗачётов/.history/" + name);
+            file.open(QIODevice::ReadWrite | QIODevice::Text);
+            QTextStream in(&file);
+            QString time, line, mes;
+            QString text = file.readAll();
+            for(int i=0; i < text.split('\n').size() - 1; i++){
+                qWarning() << text.split('\n')[i];
+                time = text.split('\n')[i].split('&')[0];
+                time = time.left(time.size() - 1);
+                mes = text.split('\n')[i].right(text.split('\n')[i].size() - time.size() - 3);
+                line = "[" + time + "] " + name.split('_')[2] + ":  "+ mes;
+                ui->chat_viewer->addItem(line);
+            }
+            file.close();
+        }
+    }
+    QScrollBar *vb = ui->chat_viewer->verticalScrollBar();
+    vb->setValue(vb->maximum());
 }
 
 
@@ -402,10 +436,12 @@ void MainWindow::reciver(){
             file.open(QIODevice::Append | QIODevice::Text);
 
             file.write(QString(time.toString("hh:mm:ss") + ":&" + data.sliced(user.size() + lesson.size() + 7) + "\n").toLocal8Bit());
-            if(ui->excercises->count() != 0){
+            if(ui->excercises->count() != 0 && ui->excercises->currentItem()){
                 if(lesson.split('@')[0] == Translit->toTranslit(current_lesson) && lesson.split('@')[1].replace("_", " ") == Translit->toTranslit(ui->excercises->currentItem()->text())){
                     //qWarning() << Translit->toTranslit(ui->excercises->currentItem()->text()) << Translit->toTranslit(current_lesson) << lesson.split('@')[1].replace("_", " ") << lesson.split('@')[0];
                     ui->chat_viewer->addItem(user + ": " + data.sliced(user.size() + lesson.size() + 7));
+                }else {
+                    trayIcon->showMessage("Система зачётов", "Новое сообщение от пользователя " + Translit->fromTranslit(user.split("_")[1]), QIcon(":/icons/pic/icon.png"));
                 }
             } else {
                 trayIcon->showMessage("Система зачётов", "Новое сообщение от пользователя " + Translit->fromTranslit(user.split("_")[1]), QIcon(":/icons/pic/icon.png"));
