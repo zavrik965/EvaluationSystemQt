@@ -38,7 +38,6 @@ private:
     bool tray_access=true;
     void init();
     QTcpSocket * socket;
-
     QSystemTrayIcon *trayIcon;
     Translitter * Translit = new Translitter();
 
