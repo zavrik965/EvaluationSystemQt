@@ -202,23 +202,23 @@ void MainWindow::on_excercises_currentRowChanged(int currentRow)
     QString lesson = Translit->toTranslit(ui->excercises->currentItem()->text());
     QDir dir(home_path + "/.СистемаЗачётов/.history/");
     QFileInfoList list = dir.entryInfoList();
-    if(class_num == ""){
+    if(current_lesson.split('_').size() != 1){
         class_num = current_lesson.split('_')[1] + current_lesson.split('_')[2].toUpper();
     }
     foreach (QFileInfo finfo, list) {
         QString name = finfo.fileName();
-        qWarning() << name;
+        /*qWarning() << name;
         qWarning() << name.split('_');
-        qWarning() << name.split('@') << Translit->toTranslit(class_num) << lesson.replace(" ", "_");
+        qWarning() << name.split('@') << Translit->toTranslit(class_num) << lesson.replace(" ", "_");*/
         if(name.split('_').size() > 1 && name.split('_')[3] == Translit->toTranslit(class_num) && name.split('@')[1].split('.')[0] == lesson.replace(" ", "_")){
-            qWarning() << home_path + "/.СистемаЗачётов/.history/" + name;
+            /*qWarning() << home_path + "/.СистемаЗачётов/.history/" + name;*/
             file.setFileName(home_path + "/.СистемаЗачётов/.history/" + name);
             file.open(QIODevice::ReadWrite | QIODevice::Text);
             QTextStream in(&file);
             QString time, line, mes;
             QString text = file.readAll();
             for(int i=0; i < text.split('\n').size() - 1; i++){
-                qWarning() << text.split('\n')[i];
+                /*qWarning() << text.split('\n')[i];*/
                 time = text.split('\n')[i].split('&')[0];
                 time = time.left(time.size() - 1);
                 mes = text.split('\n')[i].right(text.split('\n')[i].size() - time.size() - 3);
@@ -257,13 +257,18 @@ void MainWindow::on_chat_viewer_btn_clicked()
 
 void MainWindow::classes_event(QAction * action)
 {
+    lock = true;
+    ui->excercises->blockSignals(true);
+    ui->excercises->clear();
+    ui->excercises->blockSignals(false);
+    ui->chat_viewer->blockSignals(true);
+    ui->chat_viewer->clear();
+    ui->chat_viewer->blockSignals(false);
     lessons_data = lessons[action->text()].toArray();
     current_lesson = action->text();
     current_description = "";
     current_answer_text = "";
-    current_chat = "";
     current_needed_files = {};
-    ui->excercises->clear();
     for(int i=0; i < lessons_data.size(); i++)
     {
         QJsonObject item = lessons_data.at(i).toObject();
@@ -276,6 +281,7 @@ void MainWindow::classes_event(QAction * action)
         ui->excercises->addItem(newItem);
         ui->description_field->setText(current_description);
     }
+    lock = false;
 }
 
 
@@ -382,7 +388,14 @@ void MainWindow::reconnectingFTP(){
         QStringList list_files = list.split('\n');
         QString file_name;
         ui->menu_2->clear();
+        ui->excercises->blockSignals(true);
         ui->excercises->clear();
+        ui->excercises->blockSignals(false);
+        ui->chat_viewer->blockSignals(true);
+        ui->chat_viewer->clear();
+        ui->chat_viewer->blockSignals(false);
+        ui->description_field->show();
+        ui->chat_viewer->hide();
         for(int i=0; i < list_files.size() - 1; i++)
         {
             if(list_files.at(i).split('/').at(2) != ""){
@@ -436,8 +449,8 @@ void MainWindow::reciver(){
             file.open(QIODevice::Append | QIODevice::Text);
 
             file.write(QString(time.toString("hh:mm:ss") + ":&" + data.sliced(user.size() + lesson.size() + 7) + "\n").toLocal8Bit());
-            if(ui->excercises->count() != 0 && ui->excercises->currentItem()){
-                if(lesson.split('@')[0] == Translit->toTranslit(current_lesson) && lesson.split('@')[1].replace("_", " ") == Translit->toTranslit(ui->excercises->currentItem()->text())){
+            if(!lock && ui->excercises->count() != 0 && ui->excercises->currentItem()){
+                if(!lock && lesson.split('@')[0] == Translit->toTranslit(current_lesson) && lesson.split('@')[1].replace("_", " ") == Translit->toTranslit(ui->excercises->currentItem()->text())){
                     //qWarning() << Translit->toTranslit(ui->excercises->currentItem()->text()) << Translit->toTranslit(current_lesson) << lesson.split('@')[1].replace("_", " ") << lesson.split('@')[0];
                     ui->chat_viewer->addItem(user + ": " + data.sliced(user.size() + lesson.size() + 7));
                 }else {
