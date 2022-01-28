@@ -17,6 +17,7 @@
 #include <QtNetwork/QTcpSocket>
 #include "translitter.h"
 
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -47,7 +48,9 @@ private:
     QString username="";
     QString class_num="";
     QString person_type="";
+    bool lock=true;
 
+    QTimer *timer;
     ftplib *ftp = new ftplib();
     int index_theme=1;
     QString sh(string command)
@@ -86,7 +89,6 @@ private:
     QTcpSocket *sock = new QTcpSocket();
     void logining();
     void sender(QTcpSocket * socket);
-    void reconnectingFTP();
     void connectToMessageServer();
 
 private slots:
@@ -111,6 +113,8 @@ private slots:
     void fullClose();
 
     void reciver();
+
+    void reconnectingFTP();
 
     void on_login_btn_triggered();
     void on_reconnect_triggered();

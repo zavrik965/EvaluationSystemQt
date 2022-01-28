@@ -9,6 +9,7 @@
 #include "coder.cpp"
 #include <QTime>
 #include <QScrollBar>
+#include <QTimer>
 
 using namespace std;
 
@@ -18,6 +19,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     init();
+    timer = new QTimer(this);
+
     socket = new QTcpSocket();
 }
 
@@ -327,6 +330,8 @@ void MainWindow::on_login_btn_triggered()
             delete login_form;
             connectToMessageServer();
             reconnectingFTP();
+            connect(timer, SIGNAL(timeout()), this, SLOT(reconnectingFTP()));
+            timer->start(5000);
         }
         socket->close();
     }
@@ -388,9 +393,6 @@ void MainWindow::reconnectingFTP(){
         QStringList list_files = list.split('\n');
         QString file_name;
         ui->menu_2->clear();
-        ui->excercises->blockSignals(true);
-        ui->excercises->clear();
-        ui->excercises->blockSignals(false);
         ui->chat_viewer->blockSignals(true);
         ui->chat_viewer->clear();
         ui->chat_viewer->blockSignals(false);
@@ -426,6 +428,11 @@ void MainWindow::reconnectingFTP(){
          //******************
          //end import files from ftp
          //******************
+        if(current_lesson != ""){
+            qWarning() << current_lesson;
+            QAction * action = new QAction(current_lesson);
+            classes_event(action);
+        }
     }
 }
 
