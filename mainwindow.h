@@ -80,15 +80,14 @@ private:
     QJsonArray lessons_data;
     QJsonObject lessons;
     QString current_lesson="";
+    QString current_excersise="";
     QString current_description="";
     QString current_answer_text="";
-    QString current_chat="";
     QStringList current_needed_files = {};
 
     QTcpSocket *sock_send = new QTcpSocket();
     QTcpSocket *sock = new QTcpSocket();
     void logining();
-    void sender(QTcpSocket * socket);
     void connectToMessageServer();
 
 private slots:
@@ -113,6 +112,7 @@ private slots:
     void fullClose();
 
     void reciver();
+    void sender();
 
     void reconnectingFTP();
 
