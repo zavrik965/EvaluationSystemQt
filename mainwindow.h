@@ -16,6 +16,7 @@
 #include <QActionGroup>
 #include <QtNetwork/QTcpSocket>
 #include "translitter.h"
+#include <QDir>
 
 
 QT_BEGIN_NAMESPACE
@@ -49,6 +50,9 @@ private:
     QString class_num="";
     QString person_type="";
     bool lock=true;
+
+    QString home_path = QDir::homePath();
+    QString tmp_path = home_path + "/.СистемаЗачётов/tmp";
 
     QTimer *timer;
     ftplib *ftp = new ftplib();
@@ -118,5 +122,6 @@ private slots:
 
     void on_login_btn_triggered();
     void on_reconnect_triggered();
+    void on_upload_btn_clicked();
 };
 #endif // MAINWINDOW_H

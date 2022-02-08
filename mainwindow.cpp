@@ -4,12 +4,15 @@
 #include <QDebug>
 #include "logindialog.h"
 #include <QColor>
-#include <QDir>
 #include <QFileInfo>
 #include "coder.cpp"
 #include <QTime>
 #include <QScrollBar>
 #include <QTimer>
+#include <QFileDialog>
+#include <QMessageBox>
+#include "QtGui/private/qzipreader_p.h"
+#include "QtGui/private/qzipwriter_p.h"
 
 using namespace std;
 
@@ -82,7 +85,6 @@ void MainWindow::init()
             this, SLOT(iconActivated(QSystemTrayIcon::ActivationReason)));
     //trayIcon->showMessage("Система зачётов", "Запуск..", QIcon(":/icons/pic/icon.png"), 1000);
 
-    QString home_path = QDir::homePath();
     QDir directory(home_path + "/.СистемаЗачётов/");
     QFileInfoList list = directory.entryInfoList();
     QFile json_file;
@@ -202,7 +204,6 @@ void MainWindow::on_excercises_currentRowChanged(int currentRow)
     ui->description_field->show();
     ui->chat_viewer->hide();
     QFile file;
-    QString home_path = QDir::homePath();
     QString lesson = Translit->toTranslit(current_excersise);
     QDir dir(home_path + "/.СистемаЗачётов/.history/");
     QFileInfoList list = dir.entryInfoList();
@@ -306,7 +307,6 @@ void MainWindow::on_login_btn_triggered()
     if(answer == QDialog::Accepted){
         //******************
         //Connect to server
-        QString home_path = QDir::homePath();
         QFile file;
         file.setFileName(home_path + "/.СистемаЗачётов/number");
         file.open(QIODevice::ReadOnly | QIODevice::Text);
@@ -393,8 +393,7 @@ void MainWindow::reconnectingFTP(){
         ui->username->setText(username);
         ui->class_num->setText(class_num);
 
-        ftp->Nlst("/tmp/ftp_output", "student/" + class_num.left(class_num.size() - 1).toLocal8Bit() + "/");
-        QString home_path = QDir::homePath();
+        ftp->Nlst("/tmp/ftp_output", "student/" + class_num.left(class_num.size() - 1).toLocal8Bit() + "/tasks/");
         QString list;
         QFile file;
         file.setFileName("/tmp/ftp_output");
@@ -413,9 +412,9 @@ void MainWindow::reconnectingFTP(){
         for(int i=0; i < list_files.size() - 1; i++)
         {
             if(list_files.at(i).split('/').at(2) != ""){
-                file_name = list_files.at(i).split('/').at(2);
+                file_name = list_files.at(i).split('/').at(3);
                 qWarning() << home_path + "/.СистемаЗачётов/" + file_name;
-                ftp->Get((home_path + "/.СистемаЗачётов/" + file_name).toLocal8Bit().constData(), ("student/" + class_num.left(class_num.size() - 1) + "/" + file_name).toLocal8Bit().constData(), ftplib::image);
+                ftp->Get((home_path + "/.СистемаЗачётов/" + file_name).toLocal8Bit().constData(), ("student/" + class_num.left(class_num.size() - 1) + "/tasks/" + file_name).toLocal8Bit().constData(), ftplib::image);
 
                 //******************
                 //import json
@@ -430,7 +429,6 @@ void MainWindow::reconnectingFTP(){
                 lessons_data = d.array();
                 lessons[Translit->fromTranslit(file_name.split("_")[0])] = lessons_data;
                 ui->menu_2->addAction(Translit->fromTranslit(file_name.split("_")[0]));
-
                 //******************
                 //end import json
                 //******************
@@ -452,7 +450,6 @@ void MainWindow::reciver(){
     QByteArray data;
     QString user;
     QFile file;
-    QString home_path = QDir::homePath();
     QTime time = QTime::currentTime();
     data = sock->readAll();
     qWarning() << data;
@@ -490,7 +487,6 @@ void MainWindow::sender(){
         // add to file
         //************
         QFile file;
-        QString home_path = QDir::homePath();
         QDir dir(home_path + "/.СистемаЗачётов/.history/");
         QFileInfoList list = dir.entryInfoList();
         QTime time = QTime::currentTime();
@@ -530,5 +526,60 @@ void MainWindow::on_reconnect_triggered()
     sock->close();
     reconnectingFTP();
     connectToMessageServer();
+}
+
+
+void MainWindow::on_upload_btn_clicked()
+{
+    if(username != "" && current_needed_files.size() != 0){
+        if(ui->chat_viewer->isHidden()){
+            QString file_types="";
+            for(int i=0; i < current_needed_files.size(); i++){
+                file_types += "*." + current_needed_files[i].split("_")[1] + " ";
+            }
+            qWarning() << file_types << current_needed_files;
+            QStringList fileNames = QFileDialog::getOpenFileNames(this, tr("Send files"), home_path, tr(QString("Files " + file_types + "").toLocal8Bit()));
+            qWarning() << fileNames;
+            QString end;
+            QMap<QString, int> count_fileends;
+            foreach(QString filename, fileNames){
+                end = filename.split(".")[filename.split(".").size() - 1];
+                if(count_fileends.find(end) != count_fileends.end()){
+                    count_fileends[end] += 1;
+                } else{
+                    count_fileends[end] = 1;
+                }
+            }
+            qWarning() << count_fileends << current_needed_files;
+            QString error_mes = "";
+            foreach(QString file, current_needed_files){
+                if(count_fileends[file.split("_")[1]] != file.split("_")[0].toInt()){
+                    error_mes += file.split("_")[1] + ": " + QString::number(count_fileends[file.split("_")[1]]) + "/" + file.split("_")[0] + "\n";
+                }
+            }
+            if(error_mes != ""){
+                QMessageBox::critical(this, "Ошибка отправки задания", "Вы выбрали неверное количество файлов:\n" + error_mes);
+            } else{
+                QString file_path = tmp_path + "/" + Translit->toTranslit(current_lesson.replace(" ", "_") + "$" + current_excersise.replace(" ", "_") + "$" + class_num + "_" + username.replace("\n", "_")) + ".zip";
+                QZipWriter writer(file_path);
+                for(int i=0; i < fileNames.size(); i++){
+                    QString filename=fileNames.at(i);
+                    QFile file(filename);
+                    if(file.exists()){
+                        file.open(QIODevice::ReadOnly);
+                        writer.addFile(filename.split('/').takeLast(), file.readAll());
+                        file.close();
+                    }
+                }
+                writer.close();
+                int code = ftp->Put(file_path.toLocal8Bit(), QString(person_type + "/" + class_num.left(class_num.size() - 1) + "/ready_tasks/" + file_path.split('/').takeLast()).toLocal8Bit(), ftplib::image);
+                if(code == 1){
+                    trayIcon->showMessage("Система зачётов", "Задание отправлено на проверку", QIcon(":/icons/pic/icon.png"));
+                } else{
+                    trayIcon->showMessage("Система зачётов", "Задание не было отправлено на проверку, проверьте соединение с сервером", QIcon(":/icons/pic/icon.png"));
+                }
+            }
+        }
+    }
 }
 
