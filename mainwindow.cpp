@@ -2,10 +2,8 @@
 #include "ui_mainwindow.h"
 #include <QIcon>
 #include <QDebug>
-#include "logindialog.h"
 #include <QColor>
 #include <QFileInfo>
-#include "coder.cpp"
 #include <QTime>
 #include <QScrollBar>
 #include <QTimer>
@@ -13,6 +11,10 @@
 #include <QMessageBox>
 #include "QtGui/private/qzipreader_p.h"
 #include "QtGui/private/qzipwriter_p.h"
+#include "logindialog.h"
+#include "add_task_dialog.h"
+#include "coder.cpp"
+
 
 using namespace std;
 
@@ -61,6 +63,9 @@ void MainWindow::init()
     ui->title_list->setFont(QFont("", 18));
     ui->excercises->setSpacing(2);
     ui->chat_viewer->hide();
+    ui->list_students_btn->hide();
+    ui->teacher_mark_widget->hide();
+    ui->add_task_btn->hide();
     ui->reconnect->setVisible(false);
     ui->chat_viewer->setAutoScroll(true);
 
@@ -145,6 +150,7 @@ void MainWindow::on_change_theme_triggered()
         ui->chat_viewer_btn->setIcon(QIcon(":/icons/pic/chat_2.png"));
         ui->download_btn->setIcon(QIcon(":/icons/pic/download_2.png"));
         ui->upload_btn->setIcon(QIcon(":/icons/pic/upload_2.png"));
+        ui->list_students_btn->setIcon(QIcon(":/icons/pic/list_students_2.png"));
         ui->description_field->setTextColor(QColor("white"));
 
         qApp->setPalette(darkPalette);
@@ -170,6 +176,7 @@ void MainWindow::on_change_theme_triggered()
         ui->chat_viewer_btn->setIcon(QIcon(":/icons/pic/chat.png"));
         ui->download_btn->setIcon(QIcon(":/icons/pic/download.png"));
         ui->upload_btn->setIcon(QIcon(":/icons/pic/upload.png"));
+        ui->list_students_btn->setIcon(QIcon(":/icons/pic/list_students.png"));
         ui->description_field->setTextColor(QColor("black"));
 
         qApp->setPalette(lightPalette);
@@ -213,35 +220,46 @@ void MainWindow::on_excercises_currentRowChanged(int currentRow)
     }
     foreach (QFileInfo finfo, list) {
         QString name = finfo.fileName();
-        /*qWarning() << name;
-        qWarning() << name.split('_');
-        qWarning() << name.split('@') << Translit->toTranslit(class_num) << lesson.replace(" ", "_");*/
-        if(name.split('_').size() > 1 && name.split('_')[3] == Translit->toTranslit(class_num) && name.split('@')[1].split('.')[0] == lesson.replace(" ", "_")){
-            /*qWarning() << home_path + "/.СистемаЗачётов/.history/" + name;*/
-            file.setFileName(home_path + "/.СистемаЗачётов/.history/" + name);
-            file.open(QIODevice::ReadWrite | QIODevice::Text);
-            QTextStream in(&file);
-            QString time, line, mes;
-            QString text = file.readAll();
-            for(int i=0; i < text.split('\n').size() - 1; i++){
-                if(text.split('\n')[i].sliced(0, 5) != "$IAM$"){
-                    /*qWarning() << text.split('\n')[i];*/
-                    time = text.split('\n')[i].split('&')[0];
-                    time = time.left(time.size() - 1);
-                    mes = text.split('\n')[i].right(text.split('\n')[i].size() - time.size() - 3);
-                    line = "[" + time + "] " + name.split('_')[2] + ":  " + mes.replace("#$#", "\n");
-                    ui->chat_viewer->addItem(line);
-                } else{
-                    time = text.split('\n')[i].split('&')[0].split('$')[2];
-                    time = time.left(time.size() - 1);
-                    mes = text.split('\n')[i].right(text.split('\n')[i].size() - time.size() - 3 - 5);
-                    line = mes.replace("#$#", "\n") + " [" + time + "]";
-                    QListWidgetItem * mesItem = new QListWidgetItem(line);
-                    mesItem->setTextAlignment(Qt::AlignRight);
-                    ui->chat_viewer->addItem(mesItem);
+        if(finfo.isFile() && finfo.suffix() == "hs"){
+            /*qWarning() << name;
+            qWarning() << name.split('_');
+            qWarning() << name.split('@') << Translit->toTranslit(class_num) << lesson.replace(" ", "_");*/
+            if(name.split('_').size() > 1 && name.split('_')[3] == Translit->toTranslit(class_num) && name.split('@')[1].split('.')[0] == lesson.replace(" ", "_")){
+                /*qWarning() << home_path + "/.СистемаЗачётов/.history/" + name;*/
+                file.setFileName(home_path + "/.СистемаЗачётов/.history/" + name);
+                file.open(QIODevice::ReadWrite | QIODevice::Text);
+                QTextStream in(&file);
+                QString time, line, mes;
+                QString text = file.readAll();
+                for(int i=0; i < text.split('\n').size() - 1; i++){
+                    if(text.split('\n')[i].sliced(0, 5) != "$IAM$"){
+                        /*qWarning() << text.split('\n')[i];*/
+                        time = text.split('\n')[i].split('&')[0];
+                        time = time.left(time.size() - 1);
+                        mes = text.split('\n')[i].right(text.split('\n')[i].size() - time.size() - 3);
+                        line = "[" + time + "] " + name.split('_')[2] + ":  " + mes.replace("#$#", "\n");
+                        ui->chat_viewer->addItem(line);
+                    } else{
+                        time = text.split('\n')[i].split('&')[0].split('$')[2];
+                        time = time.left(time.size() - 1);
+                        mes = text.split('\n')[i].right(text.split('\n')[i].size() - time.size() - 3 - 5);
+                        line = mes.replace("#$#", "\n") + " [" + time + "]";
+                        QListWidgetItem * mesItem = new QListWidgetItem(line);
+                        mesItem->setTextAlignment(Qt::AlignRight);
+                        ui->chat_viewer->addItem(mesItem);
+                    }
                 }
+                file.close();
             }
-            file.close();
+        } else if(finfo.isFile() && finfo.suffix() == "json"){
+            QFile json;
+            QString val;
+            json.setFileName(home_path + "/.СистемаЗачётов/.history/" + name);
+            json.open(QIODevice::ReadOnly |QIODevice::Text);
+            val = json.readAll();
+            json.close();
+            QJsonDocument d = QJsonDocument::fromJson(val.toUtf8());
+            qWarning() << d;
         }
     }
     QScrollBar *vb = ui->chat_viewer->verticalScrollBar();
@@ -309,7 +327,7 @@ void MainWindow::on_login_btn_triggered()
         //******************
         //Connect to server
         QFile file;
-        file.setFileName(home_path + "/.СистемаЗачётов/number");
+        file.setFileName(home_path + "/.СистемаЗачётов/number_" + login_form->get_login());
         file.open(QIODevice::ReadOnly | QIODevice::Text);
         long long number = file.readAll().toLongLong();
         file.close();
@@ -334,7 +352,10 @@ void MainWindow::on_login_btn_triggered()
             class_num = Translit->fromTranslit(data.split(' ')[1]);
             login = login_form->get_login();
             username = Translit->fromTranslit(data.split(' ')[2]);
-            index_theme = 0;
+            username.replace("_", "\n");
+            ui->username->setText(username);
+            ui->class_num->setText(class_num);
+            index_theme = 0; //ВРЕМЕННО
             on_change_theme_triggered();
             ui->login_btn->setText("Сменить аккаунт");
             login_flag = true;
@@ -346,6 +367,15 @@ void MainWindow::on_login_btn_triggered()
             timer->start(120000);
         }
         socket->close();
+        if(person_type == "teacher"){
+            ui->list_students_btn->show();
+            ui->teacher_mark_widget->show();
+            ui->add_task_btn->show();
+        } else if(person_type == "student"){
+            ui->list_students_btn->hide();
+            ui->teacher_mark_widget->hide();
+            ui->add_task_btn->hide();
+        }
     }
 }
 
@@ -388,12 +418,8 @@ void MainWindow::reconnectingFTP(){
             //******************
             ftp->Connect("alexavr.ru:2121");
             ftp->Login("u10", "10");
-
             ftp->Get("/tmp/avatar_img.jpg", ("avatars/" + Translit->toTranslit(username.replace("\n", "_") + "_" + class_num) + ".jpg").toLocal8Bit().constData(), ftplib::image);
-            username.replace("_", "\n");
             ui->avatar->setPixmap(QPixmap("/tmp/avatar_img.jpg"));
-            ui->username->setText(username);
-            ui->class_num->setText(class_num);
 
             ftp->Nlst("/tmp/ftp_output", "student/" + class_num.left(class_num.size() - 1).toLocal8Bit() + "/tasks/");
             QString list;
@@ -444,6 +470,70 @@ void MainWindow::reconnectingFTP(){
                 qWarning() << current_lesson;
                 QAction * action = new QAction(current_lesson);
                 classes_event(action);
+            }
+        }
+    } else if(person_type == "teacher"){
+        if(login_flag){
+
+            //******************
+            //import files from ftp
+            //******************
+            ftp->Connect("alexavr.ru:2121");
+            ftp->Login("u10", "10");
+            ftp->Get("/tmp/avatar_img.jpg", ("avatars/teacher_" + Translit->toTranslit(username.replace("\n", "_")) + ".jpg").toLocal8Bit().constData(), ftplib::image);
+            ui->avatar->setPixmap(QPixmap("/tmp/avatar_img.jpg"));
+
+            foreach(QString num_class, class_num.split(";")){
+                ftp->Nlst("/tmp/ftp_output", "student/" + num_class.left(num_class.size() - 1).toLocal8Bit() + "/tasks/");
+                QString list;
+                QFile file;
+                file.setFileName("/tmp/ftp_output");
+                file.open(QIODevice::ReadOnly | QIODevice::Text);
+                list = file.readAll();
+                file.close();
+                QFile json_file;
+                QStringList list_files = list.split('\n');
+                QString file_name;
+                ui->menu_2->clear();
+                ui->chat_viewer->blockSignals(true);
+                ui->chat_viewer->clear();
+                ui->chat_viewer->blockSignals(false);
+                ui->description_field->show();
+                ui->chat_viewer->hide();
+                for(int i=0; i < list_files.size() - 1; i++)
+                {
+                    if(list_files.at(i).split('/').at(2) != ""){
+                        file_name = list_files.at(i).split('/').at(3);
+                        qWarning() << home_path + "/.СистемаЗачётов/" + file_name;
+                        ftp->Get((home_path + "/.СистемаЗачётов/" + file_name).toLocal8Bit().constData(), ("student/" + num_class.left(num_class.size() - 1) + "/tasks/" + file_name).toLocal8Bit().constData(), ftplib::image);
+
+                        //******************
+                        //import json
+                        //******************
+
+                        QString val;
+                        json_file.setFileName(home_path + "/.СистемаЗачётов/" + file_name);
+                        json_file.open(QIODevice::ReadOnly | QIODevice::Text);
+                        val = json_file.readAll();
+                        json_file.close();
+                        QJsonDocument d = QJsonDocument::fromJson(val.toUtf8());
+                        lessons_data = d.array();
+                        lessons[Translit->fromTranslit(file_name.split("_")[0])] = lessons_data;
+                        ui->menu_2->addAction(Translit->fromTranslit(file_name.split("_")[0]));
+                        //******************
+                        //end import json
+                        //******************
+                     }
+                 }
+
+                 //******************
+                 //end import files from ftp
+                 //******************
+                if(current_lesson != ""){
+                    qWarning() << current_lesson;
+                    QAction * action = new QAction(current_lesson);
+                    classes_event(action);
+                }
             }
         }
     }
@@ -586,5 +676,22 @@ void MainWindow::on_upload_btn_clicked()
             }
         }
     }
+}
+
+
+void MainWindow::on_add_task_btn_clicked()
+{
+    Add_task_dialog * dialog = new Add_task_dialog();
+    int ans = dialog->exec();
+    if(ans == QDialog::Accepted){
+        QStringList task = dialog->get_task();
+        if(task == QStringList({"", ""})){
+            QMessageBox::critical(this, "Ошибка добавления задания", "Вы не выбрали задание");
+        } else if(task[1] == ""){
+            QMessageBox::critical(this, "Ошибка добавления задания", "Вы не выбрали/заполнили задание");
+        }
+    }
+    delete dialog;
+
 }
 

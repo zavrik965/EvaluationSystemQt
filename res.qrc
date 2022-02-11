@@ -3,15 +3,17 @@
         <file>pic/mes_send.png</file>
         <file>pic/icon.png</file>
         <file>pic/chat.png</file>
-        <file>pic/code.png</file>
         <file>pic/description.png</file>
         <file>pic/chat_2.png</file>
-        <file>pic/code_2.png</file>
         <file>pic/description_2.png</file>
         <file>pic/download.png</file>
         <file>pic/download_2.png</file>
         <file>pic/upload.png</file>
         <file>pic/upload_2.png</file>
         <file>pic/avatar_img.jpg</file>
+        <file>pic/list_students.png</file>
+        <file>pic/list_students_2.png</file>
+        <file>pic/code_2.png</file>
+        <file>pic/code.png</file>
     </qresource>
 </RCC>

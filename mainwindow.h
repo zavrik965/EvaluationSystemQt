@@ -48,7 +48,7 @@ private:
     QString login="";
     QString username="";
     QString class_num="";
-    QString person_type="";
+    QString person_type="student";
     bool lock=true;
 
     QString home_path = QDir::homePath();
@@ -123,5 +123,6 @@ private slots:
     void on_login_btn_triggered();
     void on_reconnect_triggered();
     void on_upload_btn_clicked();
+    void on_add_task_btn_clicked();
 };
 #endif // MAINWINDOW_H
