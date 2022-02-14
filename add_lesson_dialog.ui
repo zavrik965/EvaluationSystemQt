@@ -1,45 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Add_task_dialog</class>
- <widget class="QDialog" name="Add_task_dialog">
+ <class>add_lesson_dialog</class>
+ <widget class="QDialog" name="add_lesson_dialog">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>480</width>
-    <height>340</height>
+    <width>340</width>
+    <height>98</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
-    <widget class="QComboBox" name="task_type">
-     <item>
-      <property name="text">
-       <string>Выберите тип задания</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Задание для проверки учителем</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Задание в Системе Сени</string>
-      </property>
-     </item>
+  <layout class="QGridLayout" name="gridLayout">
+   <property name="topMargin">
+    <number>9</number>
+   </property>
+   <property name="bottomMargin">
+    <number>9</number>
+   </property>
+   <item row="0" column="1">
+    <widget class="QLineEdit" name="new_lesson"/>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Название предмета</string>
+     </property>
     </widget>
    </item>
-   <item>
-    <widget class="QTextEdit" name="text_task"/>
+   <item row="1" column="1">
+    <widget class="QLineEdit" name="new_class"/>
    </item>
-   <item>
-    <widget class="QListWidget" name="task_list"/>
+   <item row="1" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Класс (с буквой)</string>
+     </property>
+    </widget>
    </item>
-   <item>
+   <item row="2" column="1">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -56,7 +57,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>Add_task_dialog</receiver>
+   <receiver>add_lesson_dialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -72,7 +73,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>Add_task_dialog</receiver>
+   <receiver>add_lesson_dialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

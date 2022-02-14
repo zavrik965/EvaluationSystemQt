@@ -8,6 +8,7 @@ CONFIG += c++11
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 LIBS += -L/usr/local/bin -L/usr/local/lib -lftp
 SOURCES += \
+    add_lesson_dialog.cpp \
     add_task_dialog.cpp \
     coder.cpp \
     logindialog.cpp \
@@ -16,12 +17,14 @@ SOURCES += \
     translitter.cpp
 
 HEADERS += \
+    add_lesson_dialog.h \
     add_task_dialog.h \
     logindialog.h \
     mainwindow.h \
     translitter.h
 
 FORMS += \
+    add_lesson_dialog.ui \
     add_task_dialog.ui \
     logindialog.ui \
     mainwindow.ui

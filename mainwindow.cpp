@@ -13,6 +13,7 @@
 #include "QtGui/private/qzipwriter_p.h"
 #include "logindialog.h"
 #include "add_task_dialog.h"
+#include "add_lesson_dialog.h"
 #include "coder.cpp"
 
 
@@ -63,9 +64,11 @@ void MainWindow::init()
     ui->title_list->setFont(QFont("", 18));
     ui->excercises->setSpacing(2);
     ui->chat_viewer->hide();
+    ui->ready_tasks_list->hide();
     ui->list_students_btn->hide();
     ui->teacher_mark_widget->hide();
     ui->add_task_btn->hide();
+    ui->add_lesson->hide();
     ui->reconnect->setVisible(false);
     ui->chat_viewer->setAutoScroll(true);
 
@@ -259,7 +262,7 @@ void MainWindow::on_excercises_currentRowChanged(int currentRow)
             val = json.readAll();
             json.close();
             QJsonDocument d = QJsonDocument::fromJson(val.toUtf8());
-            qWarning() << d;
+            //qWarning() << d;
         }
     }
     QScrollBar *vb = ui->chat_viewer->verticalScrollBar();
@@ -271,6 +274,7 @@ void MainWindow::on_description_btn_clicked()
 {
     ui->description_field->setText(current_description);
     ui->description_field->show();
+    ui->ready_tasks_list->hide();
     ui->chat_viewer->hide();
 }
 
@@ -280,13 +284,23 @@ void MainWindow::on_code_viewer_btn_clicked()
     ui->description_field->setText(current_answer_text);
     ui->description_field->show();
     ui->chat_viewer->hide();
+    ui->ready_tasks_list->hide();
 }
 
 
 void MainWindow::on_chat_viewer_btn_clicked()
 {
     ui->description_field->hide();
+    ui->ready_tasks_list->hide();
     ui->chat_viewer->show();
+}
+
+
+void MainWindow::on_list_students_btn_clicked()
+{
+    ui->description_field->hide();
+    ui->chat_viewer->hide();
+    ui->ready_tasks_list->show();
 }
 
 void MainWindow::classes_event(QAction * action)
@@ -371,10 +385,12 @@ void MainWindow::on_login_btn_triggered()
             ui->list_students_btn->show();
             ui->teacher_mark_widget->show();
             ui->add_task_btn->show();
+            ui->add_lesson->show();
         } else if(person_type == "student"){
             ui->list_students_btn->hide();
             ui->teacher_mark_widget->hide();
             ui->add_task_btn->hide();
+            ui->add_lesson->hide();
         }
     }
 }
@@ -439,9 +455,8 @@ void MainWindow::reconnectingFTP(){
             ui->chat_viewer->hide();
             for(int i=0; i < list_files.size() - 1; i++)
             {
-                if(list_files.at(i).split('/').at(2) != ""){
+                if(list_files.at(i).split('/').at(2) != "" && list_files.at(i).split('/').at(3).split('.')[0].endsWith(class_num.left(class_num.size() - 1) + "_" + Translit->toTranslit(class_num[class_num.size() - 1]))){
                     file_name = list_files.at(i).split('/').at(3);
-                    qWarning() << home_path + "/.СистемаЗачётов/" + file_name;
                     ftp->Get((home_path + "/.СистемаЗачётов/" + file_name).toLocal8Bit().constData(), ("student/" + class_num.left(class_num.size() - 1) + "/tasks/" + file_name).toLocal8Bit().constData(), ftplib::image);
 
                     //******************
@@ -467,7 +482,6 @@ void MainWindow::reconnectingFTP(){
              //end import files from ftp
              //******************
             if(current_lesson != ""){
-                qWarning() << current_lesson;
                 QAction * action = new QAction(current_lesson);
                 classes_event(action);
             }
@@ -482,7 +496,13 @@ void MainWindow::reconnectingFTP(){
             ftp->Login("u10", "10");
             ftp->Get("/tmp/avatar_img.jpg", ("avatars/teacher_" + Translit->toTranslit(username.replace("\n", "_")) + ".jpg").toLocal8Bit().constData(), ftplib::image);
             ui->avatar->setPixmap(QPixmap("/tmp/avatar_img.jpg"));
-
+            lessons = QJsonObject();
+            ui->menu_2->clear();
+            ui->chat_viewer->blockSignals(true);
+            ui->chat_viewer->clear();
+            ui->chat_viewer->blockSignals(false);
+            ui->description_field->show();
+            ui->chat_viewer->hide();
             foreach(QString num_class, class_num.split(";")){
                 ftp->Nlst("/tmp/ftp_output", "student/" + num_class.left(num_class.size() - 1).toLocal8Bit() + "/tasks/");
                 QString list;
@@ -494,17 +514,10 @@ void MainWindow::reconnectingFTP(){
                 QFile json_file;
                 QStringList list_files = list.split('\n');
                 QString file_name;
-                ui->menu_2->clear();
-                ui->chat_viewer->blockSignals(true);
-                ui->chat_viewer->clear();
-                ui->chat_viewer->blockSignals(false);
-                ui->description_field->show();
-                ui->chat_viewer->hide();
                 for(int i=0; i < list_files.size() - 1; i++)
                 {
-                    if(list_files.at(i).split('/').at(2) != ""){
+                    if(list_files.at(i).split('/').at(2) != "" && list_files.at(i).split('/').at(3).split('.')[0].endsWith(num_class.left(num_class.size() - 1) + "_" + Translit->toTranslit(num_class[num_class.size() - 1]))){
                         file_name = list_files.at(i).split('/').at(3);
-                        qWarning() << home_path + "/.СистемаЗачётов/" + file_name;
                         ftp->Get((home_path + "/.СистемаЗачётов/" + file_name).toLocal8Bit().constData(), ("student/" + num_class.left(num_class.size() - 1) + "/tasks/" + file_name).toLocal8Bit().constData(), ftplib::image);
 
                         //******************
@@ -518,8 +531,8 @@ void MainWindow::reconnectingFTP(){
                         json_file.close();
                         QJsonDocument d = QJsonDocument::fromJson(val.toUtf8());
                         lessons_data = d.array();
-                        lessons[Translit->fromTranslit(file_name.split("_")[0])] = lessons_data;
-                        ui->menu_2->addAction(Translit->fromTranslit(file_name.split("_")[0]));
+                        lessons[Translit->fromTranslit(file_name.split('.')[0])] = lessons_data;
+                        ui->menu_2->addAction(Translit->fromTranslit(file_name.split('.')[0]));
                         //******************
                         //end import json
                         //******************
@@ -530,7 +543,6 @@ void MainWindow::reconnectingFTP(){
                  //end import files from ftp
                  //******************
                 if(current_lesson != ""){
-                    qWarning() << current_lesson;
                     QAction * action = new QAction(current_lesson);
                     classes_event(action);
                 }
@@ -681,17 +693,42 @@ void MainWindow::on_upload_btn_clicked()
 
 void MainWindow::on_add_task_btn_clicked()
 {
-    Add_task_dialog * dialog = new Add_task_dialog();
-    int ans = dialog->exec();
-    if(ans == QDialog::Accepted){
-        QStringList task = dialog->get_task();
-        if(task == QStringList({"", ""})){
-            QMessageBox::critical(this, "Ошибка добавления задания", "Вы не выбрали задание");
-        } else if(task[1] == ""){
-            QMessageBox::critical(this, "Ошибка добавления задания", "Вы не выбрали/заполнили задание");
-        }
-    }
-    delete dialog;
+    if(current_lesson == ""){
+        QMessageBox::critical(this, "Ошибка добавления задания", "Вы не выбрали урок. Создайте или выберите урок перед созданием задания");
+    } else{
+        Add_task_dialog * dialog = new Add_task_dialog();
+        int ans = dialog->exec();
+        if(ans == QDialog::Accepted){
+            QStringList task = dialog->get_task();
+            if(task == QStringList({"", ""})){
+                QMessageBox::critical(this, "Ошибка добавления задания", "Вы не выбрали задание");
+            } else if(task[1] == ""){
+                QMessageBox::critical(this, "Ошибка добавления задания", "Вы не выбрали/заполнили задание");
+            } else {
+                qWarning() << Translit->toTranslit(current_lesson) << lessons[current_lesson];
+            }
 
+        }
+        delete dialog;
+    }
+
+
+}
+
+
+void MainWindow::on_add_lesson_clicked()
+{
+   add_lesson_dialog * dialog = new add_lesson_dialog();
+   int ans = dialog->exec();
+   if(ans == QDialog::Accepted){
+       QStringList new_lesson = dialog->get_lesson();
+       if(new_lesson[0] == ""){
+           QMessageBox::critical(this, "Ошибка добавления предмета", "Вы не указали название предмета");
+       } else if(new_lesson[1].size() > 3 || new_lesson[1].size() < 2){
+           QMessageBox::critical(this, "Ошибка добавления предмета", "Вы не указали класс предмета");
+       } else{
+           qWarning() << new_lesson[0] + "_" + new_lesson[1] << Translit->toTranslit(new_lesson[0] + "_" + new_lesson[1]);
+       }
+   }
 }
 

@@ -124,5 +124,7 @@ private slots:
     void on_reconnect_triggered();
     void on_upload_btn_clicked();
     void on_add_task_btn_clicked();
+    void on_list_students_btn_clicked();
+    void on_add_lesson_clicked();
 };
 #endif // MAINWINDOW_H

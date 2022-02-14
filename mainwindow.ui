@@ -435,6 +435,13 @@ color: rgb(255, 255, 255);</string>
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QPushButton" name="add_lesson">
+           <property name="text">
+            <string>(+) Добавить урок</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </widget>
       </item>
@@ -474,6 +481,9 @@ color: rgb(255, 255, 255);</string>
             </sizepolicy>
            </property>
           </widget>
+         </item>
+         <item>
+          <widget class="QListWidget" name="ready_tasks_list"/>
          </item>
          <item>
           <widget class="QTextBrowser" name="description_field">
