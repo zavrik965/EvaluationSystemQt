@@ -344,6 +344,7 @@ void MainWindow::on_login_btn_triggered()
         file.setFileName(home_path + "/.СистемаЗачётов/number_" + login_form->get_login());
         file.open(QIODevice::ReadOnly | QIODevice::Text);
         long long number = file.readAll().toLongLong();
+        qWarning() << number;
         file.close();
         QString login_encode = encode(login_form->get_login(), number);
         QString password_encode = encode(login_form->get_password(), number);
@@ -367,6 +368,11 @@ void MainWindow::on_login_btn_triggered()
             login = login_form->get_login();
             username = Translit->fromTranslit(data.split(' ')[2]);
             username.replace("_", "\n");
+            if(data.split(' ').size() == 4){
+                file.open(QIODevice::WriteOnly | QIODevice::Text);
+                file.write(data.split(' ')[3]);
+                file.close();
+            }
             ui->username->setText(username);
             ui->class_num->setText(class_num);
             index_theme = 0; //ВРЕМЕННО
