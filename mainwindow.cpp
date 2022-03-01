@@ -101,7 +101,6 @@ void MainWindow::init()
         {
             if(finfo.isFile() && finfo.suffix() == "json"){
                 file_name = finfo.fileName();
-                qWarning() << home_path + "/.СистемаЗачётов/" + file_name;
 
                 //******************
                 //import json
@@ -301,6 +300,39 @@ void MainWindow::on_list_students_btn_clicked()
     ui->description_field->hide();
     ui->chat_viewer->hide();
     ui->ready_tasks_list->show();
+
+    QString num_class = "";
+    QStringList list;
+    if(current_lesson != ""){
+        num_class = current_lesson.split("_")[1];
+        ftp->Nlst(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit(), "student/" + num_class.toLocal8Bit() + "/ready_tasks/");
+        QFile file;
+        file.setFileName(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit());
+        file.open(QIODevice::ReadOnly | QIODevice::Text);
+        QString tmp_line = file.readAll();
+        foreach(QString filename, tmp_line.split("\n")){
+            if(filename.split("$").size() == 3 && filename.split("$")[2][num_class.size()] == Translit->toTranslit(current_lesson.split("_")[2]) && filename.split("$")[0].split("/").takeLast() == Translit->toTranslit(current_lesson.split("_")[0])){
+                list += filename;
+            }
+        }
+        file.close();
+    } else{
+        foreach(QString num_class, class_num.split(";")){
+            ftp->Nlst(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit(), "student/" + num_class.left(num_class.size() - 1).toLocal8Bit() + "/ready_tasks/");
+            QFile file;
+            file.setFileName(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit());
+            file.open(QIODevice::ReadOnly | QIODevice::Text);
+            QString tmp_line = file.readAll();
+            foreach(QString filename, tmp_line.split("\n")){
+                if(filename.split("$").size() == 3 && filename.split("$")[2][num_class.left(num_class.size() - 1).size()] == Translit->toTranslit(num_class.right(1))){
+                    list += filename;
+                }
+            }
+            file.close();
+        }
+    }
+    qWarning() << list;
+
 }
 
 void MainWindow::classes_event(QAction * action)
@@ -344,11 +376,10 @@ void MainWindow::on_login_btn_triggered()
         file.setFileName(home_path + "/.СистемаЗачётов/number_" + login_form->get_login());
         file.open(QIODevice::ReadOnly | QIODevice::Text);
         long long number = file.readAll().toLongLong();
-        qWarning() << number;
         file.close();
         QString login_encode = encode(login_form->get_login(), number);
         QString password_encode = encode(login_form->get_password(), number);
-        qWarning() << login_encode;
+        //qWarning() << login_encode;
         socket->connectToHost("alexavr.ru", 25555, QTcpSocket::ReadWrite);
         socket->waitForConnected();
         socket->write(QString("com://connect " + login_encode + "&&" + password_encode).toLocal8Bit());
@@ -440,13 +471,13 @@ void MainWindow::reconnectingFTP(){
             //******************
             ftp->Connect("alexavr.ru:2121");
             ftp->Login("u10", "10");
-            ftp->Get("/tmp/avatar_img.jpg", ("avatars/" + Translit->toTranslit(username.replace("\n", "_") + "_" + class_num) + ".jpg").toLocal8Bit().constData(), ftplib::image);
-            ui->avatar->setPixmap(QPixmap("/tmp/avatar_img.jpg"));
+            ftp->Get(QString(QDir::tempPath() + "/avatar_img.jpg").toLocal8Bit(), ("avatars/" + Translit->toTranslit(username.replace("\n", "_") + "_" + class_num) + ".jpg").toLocal8Bit().constData(), ftplib::image);
+            ui->avatar->setPixmap(QPixmap(QString(QDir::tempPath() + "/avatar_img.jpg").toLocal8Bit()));
 
-            ftp->Nlst("/tmp/ftp_output", "student/" + class_num.left(class_num.size() - 1).toLocal8Bit() + "/tasks/");
+            ftp->Nlst(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit(), "student/" + class_num.left(class_num.size() - 1).toLocal8Bit() + "/tasks/");
             QString list;
             QFile file;
-            file.setFileName("/tmp/ftp_output");
+            file.setFileName(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit());
             file.open(QIODevice::ReadOnly | QIODevice::Text);
             list = file.readAll();
             file.close();
@@ -500,8 +531,8 @@ void MainWindow::reconnectingFTP(){
             //******************
             ftp->Connect("alexavr.ru:2121");
             ftp->Login("u10", "10");
-            ftp->Get("/tmp/avatar_img.jpg", ("avatars/teacher_" + Translit->toTranslit(username.replace("\n", "_")) + ".jpg").toLocal8Bit().constData(), ftplib::image);
-            ui->avatar->setPixmap(QPixmap("/tmp/avatar_img.jpg"));
+            ftp->Get(QString(QDir::tempPath() + "/avatar_img.jpg").toLocal8Bit(), ("avatars/teacher_" + Translit->toTranslit(username.replace("\n", "_")) + ".jpg").toLocal8Bit().constData(), ftplib::image);
+            ui->avatar->setPixmap(QPixmap(QDir::tempPath() + "/avatar_img.jpg"));
             lessons = QJsonObject();
             ui->menu_2->clear();
             ui->chat_viewer->blockSignals(true);
@@ -510,16 +541,17 @@ void MainWindow::reconnectingFTP(){
             ui->description_field->show();
             ui->chat_viewer->hide();
             foreach(QString num_class, class_num.split(";")){
-                ftp->Nlst("/tmp/ftp_output", "student/" + num_class.left(num_class.size() - 1).toLocal8Bit() + "/tasks/");
+                ftp->Nlst(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit(), "student/" + num_class.left(num_class.size() - 1).toLocal8Bit() + "/tasks/");
                 QString list;
                 QFile file;
-                file.setFileName("/tmp/ftp_output");
+                file.setFileName(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit());
                 file.open(QIODevice::ReadOnly | QIODevice::Text);
                 list = file.readAll();
                 file.close();
                 QFile json_file;
                 QStringList list_files = list.split('\n');
                 QString file_name;
+                //qWarning() << list_files;
                 for(int i=0; i < list_files.size() - 1; i++)
                 {
                     if(list_files.at(i).split('/').at(2) != "" && list_files.at(i).split('/').at(3).split('.')[0].endsWith(num_class.left(num_class.size() - 1) + "_" + Translit->toTranslit(num_class[num_class.size() - 1]))){
@@ -563,7 +595,7 @@ void MainWindow::reciver(){
     QFile file;
     QTime time = QTime::currentTime();
     data = sock->readAll();
-    qWarning() << data;
+    //qWarning() << data;
     if(data != "ping@!#"){
         qWarning() << data;
         data = data.replace("#$#", "\n");
@@ -572,7 +604,7 @@ void MainWindow::reciver(){
         QString lesson = data.split('%')[1];
         lesson = lesson.sliced(1, lesson.size() - 2);
         if(data.split('%').size() >= 3){
-            qWarning() << home_path + "/.СистемаЗачётов/.history/chat_" + user + "_" + lesson + ".hs";
+            //qWarning() << home_path + "/.СистемаЗачётов/.history/chat_" + user + "_" + lesson + ".hs";
             file.setFileName(home_path + "/.СистемаЗачётов/.history/chat_" + user + "_" + lesson + ".hs");
             file.open(QIODevice::Append | QIODevice::Text);
 
@@ -649,9 +681,7 @@ void MainWindow::on_upload_btn_clicked()
                 for(int i=0; i < current_needed_files.size(); i++){
                     file_types += "*." + current_needed_files[i].split("_")[1] + " ";
                 }
-                qWarning() << file_types << current_needed_files;
                 QStringList fileNames = QFileDialog::getOpenFileNames(this, tr("Send files"), home_path, tr(QString("Files " + file_types + "").toLocal8Bit()));
-                qWarning() << fileNames;
                 QString end;
                 QMap<QString, int> count_fileends;
                 foreach(QString filename, fileNames){
@@ -662,7 +692,6 @@ void MainWindow::on_upload_btn_clicked()
                         count_fileends[end] = 1;
                     }
                 }
-                qWarning() << count_fileends << current_needed_files;
                 QString error_mes = "";
                 foreach(QString file, current_needed_files){
                     if(count_fileends[file.split("_")[1]] != file.split("_")[0].toInt()){
@@ -706,16 +735,43 @@ void MainWindow::on_add_task_btn_clicked()
         int ans = dialog->exec();
         if(ans == QDialog::Accepted){
             QStringList task = dialog->get_task();
+            delete dialog;
             if(task == QStringList({"", ""})){
                 QMessageBox::critical(this, "Ошибка добавления задания", "Вы не выбрали задание");
             } else if(task[1] == ""){
                 QMessageBox::critical(this, "Ошибка добавления задания", "Вы не выбрали/заполнили задание");
-            } else {
-                qWarning() << Translit->toTranslit(current_lesson) << lessons[current_lesson];
+            } else if(task[0] == "classic"){
+                if(task[2] == ""){
+                    QMessageBox::critical(this, "Ошибка добавления задания", "Вы не написали название");
+                    return;
+                } else if(task[3] == ""){
+                    QMessageBox::critical(this, "Ошибка добавления задания", "Вы не выбрали типы файлов для выполненных заданий, подробнее написано во вкладке помощь");
+                    return;
+                }
+                QString filename = home_path + "/.СистемаЗачётов/" + Translit->toTranslit(current_lesson) + ".json";
+                QJsonObject lesson{{"title", task[2]}, {"description", task[1]}, {"file", task[3].replace(" ", "&")}};
+                lessons[current_lesson] = lessons[current_lesson].toArray() + lesson;
+                lessons_data = lessons[current_lesson].toArray();
+                QFile file;
+                file.setFileName(filename);
+                file.open(QIODevice::WriteOnly);
+                file.write(QJsonDocument(lessons[current_lesson].toArray()).toJson(QJsonDocument::Indented));
+                file.close();
+                if(ftp->Put(filename.toLocal8Bit(), QString("student/" + current_lesson.split("_")[1] + "/tasks/" + filename.split('/').takeLast()).toLocal8Bit(), ftplib::image) != 0){
+                    QListWidgetItem *newItem = new QListWidgetItem(ui->excercises);
+                    newItem->setTextAlignment(Qt::AlignCenter);
+                    newItem->setText(task[2]);
+                    newItem->setBackground(QColor(50, 50, 50));
+                    newItem->setForeground(QColor("white"));
+                    newItem->setFont(QFont("", 14));
+                    ui->excercises->addItem(newItem);
+                } else{
+                    QMessageBox::critical(this, "Ошибка добавления задания", "Связь с сервером утеряна, задание не отправлено");
+                }
             }
-
+        } else{
+            delete dialog;
         }
-        delete dialog;
     }
 
 
@@ -733,7 +789,17 @@ void MainWindow::on_add_lesson_clicked()
        } else if(new_lesson[1].size() > 3 || new_lesson[1].size() < 2){
            QMessageBox::critical(this, "Ошибка добавления предмета", "Вы не указали класс предмета");
        } else{
-           qWarning() << new_lesson[0] + "_" + new_lesson[1] << Translit->toTranslit(new_lesson[0] + "_" + new_lesson[1]);
+            QString filename = home_path + "/.СистемаЗачётов/" + Translit->toTranslit(new_lesson[0] + "_" + new_lesson[1].left(new_lesson[1].size() - 1) + "_" + new_lesson[1].right(1)) + ".json";
+            QJsonArray temp_tasks;
+            lessons[Translit->toTranslit(new_lesson[0] + "_" + new_lesson[1])] = temp_tasks;
+            QFile file;
+            file.setFileName(filename);
+            file.open(QIODevice::WriteOnly);
+            file.write(QJsonDocument(temp_tasks).toJson(QJsonDocument::Indented));
+            file.close();
+            if(ftp->Put(filename.toLocal8Bit(), QString("student/" + new_lesson[1].left(new_lesson[1].size() - 1) + "/tasks/" + filename.split('/').takeLast()).toLocal8Bit(), ftplib::image) != 0){
+                ui->menu_2->addAction(new_lesson[0] + "_" + new_lesson[1].left(new_lesson[1].size() - 1) + "_" + new_lesson[1].right(1));
+            }
        }
    }
 }

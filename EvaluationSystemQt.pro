@@ -6,7 +6,8 @@ CONFIG += c++11
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
-LIBS += -L/usr/local/bin -L/usr/local/lib -lftp
+LIBS += -L/usr/local/lib -lftp
+INCLUDEPATH += -L/usr/local/include
 SOURCES += \
     add_lesson_dialog.cpp \
     add_task_dialog.cpp \
