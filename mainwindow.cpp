@@ -62,6 +62,7 @@ void MainWindow::init()
 
     ui->description_field->setFontPointSize(14);
     ui->title_list->setFont(QFont("", 18));
+    ui->ready_tasks_list->setSpacing(2);
     ui->excercises->setSpacing(2);
     ui->chat_viewer->hide();
     ui->ready_tasks_list->hide();
@@ -203,6 +204,39 @@ void MainWindow::iconActivated(QSystemTrayIcon::ActivationReason reason)
 }
 
 
+void MainWindow::on_ready_tasks_list_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous)
+{
+    if(current){
+        qWarning() << current_files[current->text()] << tmp_path + current_files[current->text()].left(current_files[current->text()].size() - 4).split("/").takeLast();
+        QZipReader zip(current_files[current->text()]);
+        QDir dir(tmp_path);
+        dir.mkdir(current_files[current->text()].left(current_files[current->text()].size() - 4).split("/").takeLast());
+        zip.extractAll(tmp_path + "/" + current_files[current->text()].left(current_files[current->text()].size() - 4).split("/").takeLast());
+        ui->description_field->show();
+        QString text;
+        foreach(QZipReader::FileInfo data, zip.fileInfoList()){
+            QFile file;
+            file.setFileName(tmp_path + "/" + current_files[current->text()].left(current_files[current->text()].size() - 4).split("/").takeLast() + "/" + data.filePath);
+            file.open(QIODevice::ReadWrite | QIODevice::Text);
+            QString d = file.readAll();
+            file.close();
+            ui->description_field->setText(d);
+            for(int i=0; i < data.filePath.size(); i++){
+                text += "#";
+            }
+            text += "\n##" + data.filePath + "##\n";
+            for(int i=0; i < data.filePath.size(); i++){
+                text += "#";
+            }
+            text += "\n\n";
+            text += d;
+            text += "\n\n";
+        }
+        ui->description_field->setText(text);
+    }
+}
+
+
 void MainWindow::on_excercises_currentRowChanged(int currentRow)
 {
     QJsonObject item = lessons_data.at(currentRow).toObject();
@@ -213,6 +247,7 @@ void MainWindow::on_excercises_currentRowChanged(int currentRow)
     ui->chat_viewer->clear();
     ui->description_field->show();
     ui->chat_viewer->hide();
+    ui->ready_tasks_list->hide();
     QFile file;
     QString lesson = Translit->toTranslit(current_excersise);
     QDir dir(home_path + "/.СистемаЗачётов/.history/");
@@ -303,7 +338,24 @@ void MainWindow::on_list_students_btn_clicked()
 
     QString num_class = "";
     QStringList list;
-    if(current_lesson != ""){
+    if(current_lesson != "" && ui->excercises->currentItem() != 0x0){
+        num_class = current_lesson.split("_")[1];
+        ftp->Nlst(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit(), "student/" + num_class.toLocal8Bit() + "/ready_tasks/");
+        QFile file;
+        file.setFileName(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit());
+        file.open(QIODevice::ReadOnly | QIODevice::Text);
+        QString tmp_line = file.readAll();
+        foreach(QString filename, tmp_line.split("\n")){
+            if(filename.split("$").size() == 3 &&
+                    filename.split("$")[2][num_class.size()] == Translit->toTranslit(current_lesson.split("_")[2]) &&
+                    filename.split("$")[0].split("/").takeLast() == Translit->toTranslit(current_lesson.split("_")[0]) &&
+                    filename.split("$")[1] == Translit->toTranslit(ui->excercises->currentItem()->text().replace(" ", "_"))){
+                list += filename;
+            }
+        }
+        file.close();
+    }
+    else if(current_lesson != ""){
         num_class = current_lesson.split("_")[1];
         ftp->Nlst(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit(), "student/" + num_class.toLocal8Bit() + "/ready_tasks/");
         QFile file;
@@ -332,6 +384,20 @@ void MainWindow::on_list_students_btn_clicked()
         }
     }
     qWarning() << list;
+    ui->ready_tasks_list->clear();
+    foreach(QString filename, list){
+        ftp->Get((tmp_path + "/" + filename.split("/").takeLast()).toLocal8Bit(), filename.toLocal8Bit(), ftplib::image);
+        QString task = filename.split("/").takeLast().split(".")[0];
+        QListWidgetItem *newItem = new QListWidgetItem(ui->ready_tasks_list);
+        newItem->setTextAlignment(Qt::AlignCenter);
+        qWarning() << task.split("$")[2];
+        newItem->setText(Translit->fromTranslit(task.split("$")[1].replace("_", " ") + ": " + task.split("$")[2].split("_")[1] + " " + task.split("$")[2].split("_")[2]));
+        newItem->setBackground(QColor(50, 50, 50));
+        newItem->setForeground(QColor("white"));
+        newItem->setFont(QFont("", 12));
+        ui->ready_tasks_list->addItem(newItem);
+        current_files[Translit->fromTranslit(task.split("$")[1].replace("_", " ") + ": " + task.split("$")[2].split("_")[1] + " " + task.split("$")[2].split("_")[2])] = tmp_path + "/" + filename.split("/").takeLast();
+    }
 
 }
 
@@ -803,4 +869,5 @@ void MainWindow::on_add_lesson_clicked()
        }
    }
 }
+
 

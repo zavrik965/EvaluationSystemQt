@@ -17,6 +17,7 @@
 #include <QtNetwork/QTcpSocket>
 #include "translitter.h"
 #include <QDir>
+#include <QMap>
 
 
 QT_BEGIN_NAMESPACE
@@ -83,6 +84,7 @@ private:
 
     QJsonArray lessons_data;
     QJsonObject lessons;
+    QMap<QString, QString> current_files;
     QString current_lesson="";
     QString current_excersise="";
     QString current_description="";
@@ -126,5 +128,6 @@ private slots:
     void on_add_task_btn_clicked();
     void on_list_students_btn_clicked();
     void on_add_lesson_clicked();
+    void on_ready_tasks_list_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
 };
 #endif // MAINWINDOW_H
