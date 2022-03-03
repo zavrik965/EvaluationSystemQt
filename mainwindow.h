@@ -81,7 +81,7 @@ private:
         file.close();
         return "";
     }
-
+    QStringList text_types = QStringList({".txt", ".tex", ".text", ".log", ".apt", ".ttf", ".err", ".sub", ".rtf", ".py", ".cpp", ".c", ".pas", ".html", ".json"});
     QJsonArray lessons_data;
     QJsonObject lessons;
     QMap<QString, QString> current_files;
@@ -93,29 +93,18 @@ private:
 
     QTcpSocket *sock_send = new QTcpSocket();
     QTcpSocket *sock = new QTcpSocket();
-    void logining();
     void connectToMessageServer();
 
 private slots:
     void on_exit_triggered();
-
     void on_change_theme_triggered();
 
     void iconActivated(QSystemTrayIcon::ActivationReason reason);
-
     void on_tray_access_btn_triggered();
+    void fullClose();
 
     void on_excercises_currentRowChanged(int currentRow);
-
-    void on_description_btn_clicked();
-
-    void on_code_viewer_btn_clicked();
-
-    void on_chat_viewer_btn_clicked();
-
     void classes_event(QAction * action);
-
-    void fullClose();
 
     void reciver();
     void sender();
@@ -127,7 +116,13 @@ private slots:
     void on_upload_btn_clicked();
     void on_add_task_btn_clicked();
     void on_list_students_btn_clicked();
+    void on_description_btn_clicked();
+    void on_code_viewer_btn_clicked();
+    void on_chat_viewer_btn_clicked();
     void on_add_lesson_clicked();
     void on_ready_tasks_list_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
+    void on_open_folder_btn_clicked();
+    void on_answer_field_anchorClicked(const QUrl &arg1);
+    void on_accept_mark_clicked();
 };
 #endif // MAINWINDOW_H

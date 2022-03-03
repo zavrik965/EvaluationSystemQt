@@ -9,6 +9,7 @@
 #include <QTimer>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QProcess>
 #include "QtGui/private/qzipreader_p.h"
 #include "QtGui/private/qzipwriter_p.h"
 #include "logindialog.h"
@@ -60,13 +61,13 @@ void MainWindow::init()
     trayIcon = new QSystemTrayIcon(QIcon(":/icons/pic/icon.png"), this);
     trayIcon->setToolTip("Система Зачётов");
 
-    ui->description_field->setFontPointSize(14);
-    ui->title_list->setFont(QFont("", 18));
     ui->ready_tasks_list->setSpacing(2);
     ui->excercises->setSpacing(2);
     ui->chat_viewer->hide();
+    ui->answer_field->hide();
     ui->ready_tasks_list->hide();
     ui->list_students_btn->hide();
+    ui->open_folder_btn->hide();
     ui->teacher_mark_widget->hide();
     ui->add_task_btn->hide();
     ui->add_lesson->hide();
@@ -151,9 +152,9 @@ void MainWindow::on_change_theme_triggered()
         ui->description_btn->setIcon(QIcon(":/icons/pic/description_2.png"));
         ui->code_viewer_btn->setIcon(QIcon(":/icons/pic/code_2.png"));
         ui->chat_viewer_btn->setIcon(QIcon(":/icons/pic/chat_2.png"));
-        ui->download_btn->setIcon(QIcon(":/icons/pic/download_2.png"));
         ui->upload_btn->setIcon(QIcon(":/icons/pic/upload_2.png"));
         ui->list_students_btn->setIcon(QIcon(":/icons/pic/list_students_2.png"));
+        ui->open_folder_btn->setIcon(QIcon(":/icons/pic/folder_2.png"));
         ui->description_field->setTextColor(QColor("white"));
 
         qApp->setPalette(darkPalette);
@@ -177,9 +178,9 @@ void MainWindow::on_change_theme_triggered()
         ui->description_btn->setIcon(QIcon(":/icons/pic/description.png"));
         ui->code_viewer_btn->setIcon(QIcon(":/icons/pic/code.png"));
         ui->chat_viewer_btn->setIcon(QIcon(":/icons/pic/chat.png"));
-        ui->download_btn->setIcon(QIcon(":/icons/pic/download.png"));
         ui->upload_btn->setIcon(QIcon(":/icons/pic/upload.png"));
         ui->list_students_btn->setIcon(QIcon(":/icons/pic/list_students.png"));
+        ui->open_folder_btn->setIcon(QIcon(":/icons/pic/folder.png"));
         ui->description_field->setTextColor(QColor("black"));
 
         qApp->setPalette(lightPalette);
@@ -207,32 +208,42 @@ void MainWindow::iconActivated(QSystemTrayIcon::ActivationReason reason)
 void MainWindow::on_ready_tasks_list_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous)
 {
     if(current){
-        qWarning() << current_files[current->text()] << tmp_path + current_files[current->text()].left(current_files[current->text()].size() - 4).split("/").takeLast();
+        ui->teacher_mark_widget->show();
+        ui->answer_field->setText("");
+        ui->open_folder_btn->show();
+        //qWarning() << current_files[current->text()] << tmp_path + current_files[current->text()].left(current_files[current->text()].size() - 4).split("/").takeLast();
         QZipReader zip(current_files[current->text()]);
         QDir dir(tmp_path);
         dir.mkdir(current_files[current->text()].left(current_files[current->text()].size() - 4).split("/").takeLast());
         zip.extractAll(tmp_path + "/" + current_files[current->text()].left(current_files[current->text()].size() - 4).split("/").takeLast());
-        ui->description_field->show();
+        ui->answer_field->show();
         QString text;
         foreach(QZipReader::FileInfo data, zip.fileInfoList()){
             QFile file;
-            file.setFileName(tmp_path + "/" + current_files[current->text()].left(current_files[current->text()].size() - 4).split("/").takeLast() + "/" + data.filePath);
-            file.open(QIODevice::ReadWrite | QIODevice::Text);
-            QString d = file.readAll();
-            file.close();
-            ui->description_field->setText(d);
+            QString d;
+            QString href = tmp_path + "/" + current_files[current->text()].left(current_files[current->text()].size() - 4).split("/").takeLast() + "/" + data.filePath;
+            if(text_types.filter(QFileInfo(tmp_path + "/" + current_files[current->text()].left(current_files[current->text()].size() - 4).split("/").takeLast() + "/" + data.filePath).suffix()).size() != 0){
+                file.setFileName(tmp_path + "/" + current_files[current->text()].left(current_files[current->text()].size() - 4).split("/").takeLast() + "/" + data.filePath);
+                file.open(QIODevice::ReadWrite | QIODevice::Text);
+                d = file.readAll();
+                d = d.replace("\n", "<br>");
+                file.close();
+            } else {
+                d = "Данный файл недоступен для предпросмотра";
+            }
             for(int i=0; i < data.filePath.size(); i++){
                 text += "#";
             }
-            text += "\n##" + data.filePath + "##\n";
+            QString link = "##<a href=\"" + href + "\">" + data.filePath + "</a>##";
+            text += "<br>" + link + "<br>";
             for(int i=0; i < data.filePath.size(); i++){
                 text += "#";
             }
-            text += "\n\n";
+            text += "<br><br>";
             text += d;
-            text += "\n\n";
+            text += "<br><br>";
         }
-        ui->description_field->setText(text);
+        ui->answer_field->append(text);
     }
 }
 
@@ -245,15 +256,24 @@ void MainWindow::on_excercises_currentRowChanged(int currentRow)
     current_needed_files = item.value("file").toString().split("&");
     ui->description_field->setText(current_description);
     ui->chat_viewer->clear();
+    ui->answer_field->hide();
     ui->description_field->show();
+    ui->teacher_mark_widget->hide();
     ui->chat_viewer->hide();
+    ui->open_folder_btn->hide();
     ui->ready_tasks_list->hide();
+    if(person_type == "teacher"){
+        ui->upload_btn->hide();
+    }
     QFile file;
+    QString num_class;
     QString lesson = Translit->toTranslit(current_excersise);
     QDir dir(home_path + "/.СистемаЗачётов/.history/");
     QFileInfoList list = dir.entryInfoList();
     if(current_lesson.split('_').size() != 1){
-        class_num = current_lesson.split('_')[1] + current_lesson.split('_')[2].toUpper();
+        num_class = current_lesson.split('_')[1] + current_lesson.split('_')[2].toUpper();
+    } else if(person_type == "student"){
+        num_class = class_num;
     }
     foreach (QFileInfo finfo, list) {
         QString name = finfo.fileName();
@@ -261,7 +281,7 @@ void MainWindow::on_excercises_currentRowChanged(int currentRow)
             /*qWarning() << name;
             qWarning() << name.split('_');
             qWarning() << name.split('@') << Translit->toTranslit(class_num) << lesson.replace(" ", "_");*/
-            if(name.split('_').size() > 1 && name.split('_')[3] == Translit->toTranslit(class_num) && name.split('@')[1].split('.')[0] == lesson.replace(" ", "_")){
+            if(name.split('_').size() > 1 && name.split('_')[3] == Translit->toTranslit(num_class) && name.split('@')[1].split('.')[0] == lesson.replace(" ", "_")){
                 /*qWarning() << home_path + "/.СистемаЗачётов/.history/" + name;*/
                 file.setFileName(home_path + "/.СистемаЗачётов/.history/" + name);
                 file.open(QIODevice::ReadWrite | QIODevice::Text);
@@ -306,19 +326,33 @@ void MainWindow::on_excercises_currentRowChanged(int currentRow)
 
 void MainWindow::on_description_btn_clicked()
 {
+    ui->description_field->clear();
     ui->description_field->setText(current_description);
     ui->description_field->show();
     ui->ready_tasks_list->hide();
     ui->chat_viewer->hide();
+    ui->open_folder_btn->hide();
+    ui->answer_field->hide();
+    ui->teacher_mark_widget->hide();
+    if(person_type == "teacher"){
+        ui->upload_btn->hide();
+    }
 }
 
 
 void MainWindow::on_code_viewer_btn_clicked()
 {
-    ui->description_field->setText(current_answer_text);
-    ui->description_field->show();
+    ui->description_field->hide();
+    ui->answer_field->show();
     ui->chat_viewer->hide();
     ui->ready_tasks_list->hide();
+    ui->teacher_mark_widget->hide();
+    if(person_type == "student"){
+        ui->open_folder_btn->hide();
+        ui->answer_field->setText(current_answer_text);
+    } else if(person_type == "teacher"){
+        ui->upload_btn->hide();
+    }
 }
 
 
@@ -327,6 +361,10 @@ void MainWindow::on_chat_viewer_btn_clicked()
     ui->description_field->hide();
     ui->ready_tasks_list->hide();
     ui->chat_viewer->show();
+    ui->open_folder_btn->hide();
+    ui->answer_field->hide();
+    ui->upload_btn->show();
+    ui->teacher_mark_widget->hide();
 }
 
 
@@ -334,7 +372,10 @@ void MainWindow::on_list_students_btn_clicked()
 {
     ui->description_field->hide();
     ui->chat_viewer->hide();
+    ui->answer_field->hide();
     ui->ready_tasks_list->show();
+    ui->open_folder_btn->hide();
+    ui->upload_btn->hide();
 
     QString num_class = "";
     QStringList list;
@@ -383,14 +424,14 @@ void MainWindow::on_list_students_btn_clicked()
             file.close();
         }
     }
-    qWarning() << list;
+    //qWarning() << list;
     ui->ready_tasks_list->clear();
     foreach(QString filename, list){
         ftp->Get((tmp_path + "/" + filename.split("/").takeLast()).toLocal8Bit(), filename.toLocal8Bit(), ftplib::image);
         QString task = filename.split("/").takeLast().split(".")[0];
         QListWidgetItem *newItem = new QListWidgetItem(ui->ready_tasks_list);
         newItem->setTextAlignment(Qt::AlignCenter);
-        qWarning() << task.split("$")[2];
+        //qWarning() << task.split("$")[2];
         newItem->setText(Translit->fromTranslit(task.split("$")[1].replace("_", " ") + ": " + task.split("$")[2].split("_")[1] + " " + task.split("$")[2].split("_")[2]));
         newItem->setBackground(QColor(50, 50, 50));
         newItem->setForeground(QColor("white"));
@@ -401,8 +442,25 @@ void MainWindow::on_list_students_btn_clicked()
 
 }
 
+
+void MainWindow::on_open_folder_btn_clicked()
+{
+    //Windows
+    QProcess::startDetached("explorer", QStringList() << tmp_path + "/" + current_files[ui->ready_tasks_list->currentItem()->text()].left(current_files[ui->ready_tasks_list->currentItem()->text()].size() - 4).split("/").takeLast());
+    //Linux
+    QProcess::startDetached("xdg-open", QStringList() << tmp_path + "/" + current_files[ui->ready_tasks_list->currentItem()->text()].left(current_files[ui->ready_tasks_list->currentItem()->text()].size() - 4).split("/").takeLast());
+}
+
+void MainWindow::on_answer_field_anchorClicked(const QUrl &link)
+{
+    QProcess::startDetached("xdg-open", QStringList() << link.toString());
+}
+
+
 void MainWindow::classes_event(QAction * action)
 {
+    ui->open_folder_btn->hide();
+    ui->teacher_mark_widget->hide();
     lock = true;
     ui->excercises->blockSignals(true);
     ui->excercises->clear();
@@ -410,6 +468,13 @@ void MainWindow::classes_event(QAction * action)
     ui->chat_viewer->blockSignals(true);
     ui->chat_viewer->clear();
     ui->chat_viewer->blockSignals(false);
+    ui->ready_tasks_list->blockSignals(true);
+    ui->ready_tasks_list->clear();
+    ui->ready_tasks_list->blockSignals(false);
+    ui->answer_field->clear();
+    if(person_type == "teacher"){
+        ui->upload_btn->hide();
+    }
     lessons_data = lessons[action->text()].toArray();
     current_lesson = action->text();
     current_description = "";
@@ -486,14 +551,18 @@ void MainWindow::on_login_btn_triggered()
         socket->close();
         if(person_type == "teacher"){
             ui->list_students_btn->show();
-            ui->teacher_mark_widget->show();
+            ui->teacher_mark_widget->hide();
             ui->add_task_btn->show();
             ui->add_lesson->show();
+
+            ui->upload_btn->hide();
         } else if(person_type == "student"){
             ui->list_students_btn->hide();
             ui->teacher_mark_widget->hide();
             ui->add_task_btn->hide();
             ui->add_lesson->hide();
+
+            ui->upload_btn->show();
         }
     }
 }
@@ -556,6 +625,8 @@ void MainWindow::reconnectingFTP(){
             ui->chat_viewer->blockSignals(false);
             ui->description_field->show();
             ui->chat_viewer->hide();
+            ui->answer_field->hide();
+            ui->ready_tasks_list->hide();
             for(int i=0; i < list_files.size() - 1; i++)
             {
                 if(list_files.at(i).split('/').at(2) != "" && list_files.at(i).split('/').at(3).split('.')[0].endsWith(class_num.left(class_num.size() - 1) + "_" + Translit->toTranslit(class_num[class_num.size() - 1]))){
@@ -606,6 +677,8 @@ void MainWindow::reconnectingFTP(){
             ui->chat_viewer->blockSignals(false);
             ui->description_field->show();
             ui->chat_viewer->hide();
+            ui->answer_field->hide();
+            ui->ready_tasks_list->hide();
             foreach(QString num_class, class_num.split(";")){
                 ftp->Nlst(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit(), "student/" + num_class.left(num_class.size() - 1).toLocal8Bit() + "/tasks/");
                 QString list;
@@ -646,10 +719,10 @@ void MainWindow::reconnectingFTP(){
                  //******************
                  //end import files from ftp
                  //******************
-                if(current_lesson != ""){
-                    QAction * action = new QAction(current_lesson);
-                    classes_event(action);
-                }
+            }
+            if(current_lesson != ""){
+                QAction * action = new QAction(current_lesson);
+                classes_event(action);
             }
         }
     }
@@ -870,4 +943,40 @@ void MainWindow::on_add_lesson_clicked()
    }
 }
 
+
+
+void MainWindow::on_accept_mark_clicked()
+{
+    socket->connectToHost("alexavr.ru", 25555, QTcpSocket::ReadWrite);
+    socket->waitForConnected();
+
+    qWarning() << current_files << ui->ready_tasks_list->currentItem()->text();
+    qWarning() << current_files[ui->ready_tasks_list->currentItem()->text()];
+
+    QString task = current_files[ui->ready_tasks_list->currentItem()->text()].split("/").takeLast().split(".").takeFirst();
+
+    qWarning() << task.split("$");
+    qWarning() << task.split("$")[1];
+    qWarning() << task.split("$")[2] << task.split("$")[2].split("_");
+
+    QString name = task.split("$")[2].right(task.split("$")[2].size() - task.split("$")[2].split("_")[0].size() - 1);
+    QString _class = task.split("$")[2].split("_").takeFirst();
+    QString mark = Translit->toTranslit(ui->marks->currentText());
+    QString excercise = task.split("$")[1];
+    QString lesson = task.split("$")[0];
+    QDateTime time = QDateTime::currentDateTime();
+    QString strtime = time.toString("dd:MM:yyyy&hh:mm:ss");
+
+    QFile file;
+    file.setFileName(home_path + "/.СистемаЗачётов/number_" + login);
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    long long number = file.readAll().toLongLong();
+    file.close();
+    qWarning() << QString("com://take_mark " + name + "&&" + _class + "&&" + encode(mark, number) + "&&" + lesson + "&&" + excercise + "&&" + strtime + "&&" + encode(login, number));
+    socket->write(QString("com://take_mark " + name + "&&" + _class + "&&" + encode(mark, number) + "&&" + lesson + "&&" + excercise + "&&" + strtime + "&&" + encode(login, number)).toLocal8Bit());
+    socket->waitForReadyRead();
+    QByteArray data = socket->readAll();
+    qWarning() << data;
+    socket->close();
+}
 

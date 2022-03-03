@@ -15,5 +15,7 @@
         <file>pic/list_students_2.png</file>
         <file>pic/code_2.png</file>
         <file>pic/code.png</file>
+        <file>pic/folder.png</file>
+        <file>pic/folder_2.png</file>
     </qresource>
 </RCC>
