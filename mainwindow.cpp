@@ -840,6 +840,7 @@ void MainWindow::on_upload_btn_clicked()
                 if(error_mes != ""){
                     QMessageBox::critical(this, "Ошибка отправки задания", "Вы выбрали неверное количество файлов:\n" + error_mes);
                 } else{
+                    qWarning() << current_lesson;
                     QString file_path = tmp_path + "/" + Translit->toTranslit(current_lesson.replace(" ", "_") + "$" + current_excersise.replace(" ", "_") + "$" + class_num + "_" + username.replace("\n", "_")) + ".zip";
                     QZipWriter writer(file_path);
                     for(int i=0; i < fileNames.size(); i++){
