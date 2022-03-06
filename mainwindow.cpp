@@ -58,6 +58,12 @@ void MainWindow::on_exit_triggered()
 
 void MainWindow::init()
 {
+    QDir main_dir(QDir::homePath());
+    main_dir.mkdir(".СистемаЗачётов");
+    main_dir.setPath(QDir::homePath() + "/.СистемаЗачётов");
+    main_dir.mkdir("tmp");
+    main_dir.mkdir(".history");
+
     trayIcon = new QSystemTrayIcon(QIcon(":/icons/pic/icon.png"), this);
     trayIcon->setToolTip("Система Зачётов");
 
@@ -857,7 +863,8 @@ void MainWindow::on_upload_btn_clicked()
                     if(code == 1){
                         trayIcon->showMessage("Система зачётов", "Задание отправлено на проверку", QIcon(":/icons/pic/icon.png"));
                     } else{
-                        trayIcon->showMessage("Система зачётов", "Задание не было отправлено на проверку, проверьте соединение с сервером", QIcon(":/icons/pic/icon.png"));
+                        QMessageBox::critical(this, "Ошибка добавления задания", "Связь с сервером утеряна, задание не отправлено");
+                        //trayIcon->showMessage("Система зачётов", "Задание не было отправлено на проверку, проверьте соединение с сервером", QIcon(":/icons/pic/icon.png"));
                     }
                 }
             }
@@ -871,7 +878,21 @@ void MainWindow::on_add_task_btn_clicked()
     if(current_lesson == ""){
         QMessageBox::critical(this, "Ошибка добавления задания", "Вы не выбрали урок. Создайте или выберите урок перед созданием задания");
     } else{
+        QString num_class = current_lesson.split("_").takeLast();
+        socket->connectToHost("alexavr.ru", 25555, QTcpSocket::ReadWrite);
+        socket->waitForConnected();
+        socket->write(QString("com://get_tasks " + encode(num_class, 0)).toLocal8Bit());
+        socket->waitForReadyRead();
+        QByteArray task_data = socket->readAll();
+        if(task_data == "" || task_data == "Error 404! Server not found!"){
+            QMessageBox::critical(this, "Ошибка добавления задания", "Связь с сервером Системы Тестов отсутствует");
+            return;
+        }
+        socket->close();
         Add_task_dialog * dialog = new Add_task_dialog();
+        foreach(QString task, QString(task_data).split("$")){
+            dialog->add_task(task.split("|")[1]);
+        }
         int ans = dialog->exec();
         if(ans == QDialog::Accepted){
             QStringList task = dialog->get_task();
@@ -905,9 +926,27 @@ void MainWindow::on_add_task_btn_clicked()
                     newItem->setForeground(QColor("white"));
                     newItem->setFont(QFont("", 14));
                     ui->excercises->addItem(newItem);
+                    trayIcon->showMessage("Система зачётов", "Задание отправлено ученикам", QIcon(":/icons/pic/icon.png"));
                 } else{
                     QMessageBox::critical(this, "Ошибка добавления задания", "Связь с сервером утеряна, задание не отправлено");
                 }
+            } else if(task[0] == "tasksystem"){
+                int p = current_lesson.split("_").size();
+                QString num_class = Translit->toTranslit(QString(current_lesson.split("_")[p - 2] + current_lesson.split("_")[p - 1]).replace("_", ""));
+                socket->connectToHost("alexavr.ru", 25555, QTcpSocket::ReadWrite);
+                socket->waitForConnected();
+                socket->write(QString("com://give_task " + encode(num_class, 0) + "&&" + task[1]).toLocal8Bit());
+                socket->waitForReadyRead();
+                QByteArray data = socket->readAll();
+                qWarning() << data;
+                if(data == "Ok"){
+                    trayIcon->showMessage("Система зачётов", "Задание отправлено ученикам", QIcon(":/icons/pic/icon.png"));
+                } else if(data == ""){
+                    QMessageBox::critical(this, "Ошибка добавления задания", "Связь с сервером утеряна, задание не отправлено");
+                } else {
+                    QMessageBox::critical(this, "Ошибка добавления задания", "Ошибка сервера");
+                }
+                socket->close();
             }
         } else{
             delete dialog;
@@ -966,7 +1005,7 @@ void MainWindow::on_accept_mark_clicked()
     QString excercise = task.split("$")[1];
     QString lesson = task.split("$")[0];
     QDateTime time = QDateTime::currentDateTime();
-    QString strtime = time.toString("dd:MM:yyyy&hh:mm:ss");
+    QString strtime = time.toString("dd.MM.yyyy&hh:mm:ss");
 
     QFile file;
     file.setFileName(home_path + "/.СистемаЗачётов/number_" + login);

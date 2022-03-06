@@ -20,6 +20,7 @@ private:
     Ui::Add_task_dialog *ui;
 public:
     QStringList get_task();
+    void add_task(QString task);
 private slots:
     void on_task_type_currentIndexChanged(int index);
 };
