@@ -18,6 +18,7 @@
 #include "translitter.h"
 #include <QDir>
 #include <QMap>
+#include <aboutdialog.h>
 
 
 QT_BEGIN_NAMESPACE
@@ -37,6 +38,7 @@ protected:
 
 private:
     Ui::MainWindow *ui;
+    AboutDialog * about_dialog = new AboutDialog;
 
     bool tray_access=true;
     void init();
@@ -124,5 +126,6 @@ private slots:
     void on_open_folder_btn_clicked();
     void on_answer_field_anchorClicked(const QUrl &arg1);
     void on_accept_mark_clicked();
+    void on_about_triggered();
 };
 #endif // MAINWINDOW_H

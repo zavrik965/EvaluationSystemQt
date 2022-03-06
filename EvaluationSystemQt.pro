@@ -9,8 +9,9 @@ CONFIG += c++11
 LIBS += -L/usr/local/lib -lftp
 INCLUDEPATH += -L/usr/local/include
 SOURCES += \
-    add_lesson_dialog.cpp \
-    add_task_dialog.cpp \
+    aboutdialog.cpp \
+    addlessondialog.cpp \
+    addtaskdialog.cpp \
     coder.cpp \
     logindialog.cpp \
     main.cpp \
@@ -18,15 +19,17 @@ SOURCES += \
     translitter.cpp
 
 HEADERS += \
-    add_lesson_dialog.h \
-    add_task_dialog.h \
+    aboutdialog.h \
+    addlessondialog.h \
+    addtaskdialog.h \
     logindialog.h \
     mainwindow.h \
     translitter.h
 
 FORMS += \
-    add_lesson_dialog.ui \
-    add_task_dialog.ui \
+    aboutdialog.ui \
+    addlessondialog.ui \
+    addtaskdialog.ui \
     logindialog.ui \
     mainwindow.ui
 

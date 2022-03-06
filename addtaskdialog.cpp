@@ -1,9 +1,9 @@
-#include "add_task_dialog.h"
-#include "ui_add_task_dialog.h"
+#include "addtaskdialog.h"
+#include "ui_addtaskdialog.h"
 
-Add_task_dialog::Add_task_dialog(QWidget *parent) :
+AddTaskDialog::AddTaskDialog(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::Add_task_dialog)
+    ui(new Ui::AddTaskDialog)
 {
     ui->setupUi(this);
     ui->task_list->hide();
@@ -14,12 +14,12 @@ Add_task_dialog::Add_task_dialog(QWidget *parent) :
     ui->file_label->hide();
 }
 
-Add_task_dialog::~Add_task_dialog()
+AddTaskDialog::~AddTaskDialog()
 {
     delete ui;
 }
 
-QStringList Add_task_dialog::get_task(){
+QStringList AddTaskDialog::get_task(){
     if(ui->task_type->currentIndex() == 1){
         return {"classic", ui->text_task->toPlainText(), ui->title->text(), ui->files->text()};
     } else if(ui->task_type->currentIndex() == 2){
@@ -32,11 +32,11 @@ QStringList Add_task_dialog::get_task(){
     return {"", ""};
 }
 
-void Add_task_dialog::add_task(QString task){
+void AddTaskDialog::add_task(QString task){
     ui->task_list->addItem(task);
 }
 
-void Add_task_dialog::on_task_type_currentIndexChanged(int index)
+void AddTaskDialog::on_task_type_currentIndexChanged(int index)
 {
     if(index == 1){
         ui->task_list->hide();

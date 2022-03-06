@@ -13,8 +13,8 @@
 #include "QtGui/private/qzipreader_p.h"
 #include "QtGui/private/qzipwriter_p.h"
 #include "logindialog.h"
-#include "add_task_dialog.h"
-#include "add_lesson_dialog.h"
+#include "addtaskdialog.h"
+#include "addlessondialog.h"
 #include "coder.cpp"
 
 
@@ -34,6 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+    delete about_dialog;
 }
 
 void MainWindow::closeEvent(QCloseEvent * event)
@@ -66,6 +67,15 @@ void MainWindow::init()
 
     trayIcon = new QSystemTrayIcon(QIcon(":/icons/pic/icon.png"), this);
     trayIcon->setToolTip("Система Зачётов");
+
+    QFile versionfile(":/settings/version");
+    versionfile.open(QFile::ReadOnly);
+    QString data = versionfile.readAll();
+    about_dialog->setTitle(data.split("\n")[0]);
+    about_dialog->setVersion(data.split("\n")[1]);
+    about_dialog->setDescription(data.split("\n")[2]);
+    about_dialog->setLink(data.split("\n")[3]);
+    versionfile.close();
 
     ui->ready_tasks_list->setSpacing(2);
     ui->excercises->setSpacing(2);
@@ -889,7 +899,7 @@ void MainWindow::on_add_task_btn_clicked()
             return;
         }
         socket->close();
-        Add_task_dialog * dialog = new Add_task_dialog();
+        AddTaskDialog * dialog = new AddTaskDialog();
         foreach(QString task, QString(task_data).split("$")){
             dialog->add_task(task.split("|")[1]);
         }
@@ -959,7 +969,7 @@ void MainWindow::on_add_task_btn_clicked()
 
 void MainWindow::on_add_lesson_clicked()
 {
-   add_lesson_dialog * dialog = new add_lesson_dialog();
+   AddLessonDialog * dialog = new AddLessonDialog();
    int ans = dialog->exec();
    if(ans == QDialog::Accepted){
        QStringList new_lesson = dialog->get_lesson();
@@ -981,6 +991,7 @@ void MainWindow::on_add_lesson_clicked()
             }
        }
    }
+   delete dialog;
 }
 
 
@@ -1018,5 +1029,10 @@ void MainWindow::on_accept_mark_clicked()
     QByteArray data = socket->readAll();
     qWarning() << data;
     socket->close();
+}
+
+void MainWindow::on_about_triggered()
+{
+    about_dialog->exec();
 }
 

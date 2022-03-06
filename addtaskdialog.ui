@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Add_task_dialog</class>
- <widget class="QDialog" name="Add_task_dialog">
+ <class>AddTaskDialog</class>
+ <widget class="QDialog" name="AddTaskDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>480</width>
-    <height>340</height>
+    <height>361</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Добавить задание</string>
   </property>
   <layout class="QFormLayout" name="formLayout">
    <item row="0" column="0" colspan="2">
@@ -83,12 +83,12 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>Add_task_dialog</receiver>
+   <receiver>AddTaskDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
+     <x>375</x>
+     <y>351</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -99,12 +99,12 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>Add_task_dialog</receiver>
+   <receiver>AddTaskDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>316</x>
-     <y>260</y>
+     <x>443</x>
+     <y>351</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
