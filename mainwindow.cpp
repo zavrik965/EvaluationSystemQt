@@ -397,12 +397,10 @@ void MainWindow::on_list_students_btn_clicked()
     QStringList list;
     if(current_lesson != "" && ui->excercises->currentItem() != 0x0){
         num_class = current_lesson.split("_")[1];
-        ftp->Nlst(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit(), "student/" + num_class.toLocal8Bit() + "/ready_tasks/");
-        QFile file;
-        file.setFileName(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit());
-        file.open(QIODevice::ReadOnly | QIODevice::Text);
-        QString tmp_line = file.readAll();
-        foreach(QString filename, tmp_line.split("\n")){
+        string tmp_line;
+        ftp->List(QString("student/" + num_class + "/ready_tasks/").toStdString(), tmp_line);
+        foreach(QString filename, QString().fromStdString(tmp_line).split("\n")){
+            filename = "student/" + num_class + "/ready_tasks/" + filename;
             if(filename.split("$").size() == 3 &&
                     filename.split("$")[2][num_class.size()] == Translit->toTranslit(current_lesson.split("_")[2]) &&
                     filename.split("$")[0].split("/").takeLast() == Translit->toTranslit(current_lesson.split("_")[0]) &&
@@ -410,40 +408,34 @@ void MainWindow::on_list_students_btn_clicked()
                 list += filename;
             }
         }
-        file.close();
+
     }
     else if(current_lesson != ""){
         num_class = current_lesson.split("_")[1];
-        ftp->Nlst(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit(), "student/" + num_class.toLocal8Bit() + "/ready_tasks/");
-        QFile file;
-        file.setFileName(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit());
-        file.open(QIODevice::ReadOnly | QIODevice::Text);
-        QString tmp_line = file.readAll();
-        foreach(QString filename, tmp_line.split("\n")){
+        string tmp_line;
+        ftp->List(QString("student/" + num_class + "/ready_tasks/").toStdString(), tmp_line);
+        foreach(QString filename, QString().fromStdString(tmp_line).split("\n")){
+            filename = "student/" + num_class + "/ready_tasks/" + filename;
             if(filename.split("$").size() == 3 && filename.split("$")[2][num_class.size()] == Translit->toTranslit(current_lesson.split("_")[2]) && filename.split("$")[0].split("/").takeLast() == Translit->toTranslit(current_lesson.split("_")[0])){
                 list += filename;
             }
         }
-        file.close();
     } else{
         foreach(QString num_class, class_num.split(";")){
-            ftp->Nlst(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit(), "student/" + num_class.left(num_class.size() - 1).toLocal8Bit() + "/ready_tasks/");
-            QFile file;
-            file.setFileName(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit());
-            file.open(QIODevice::ReadOnly | QIODevice::Text);
-            QString tmp_line = file.readAll();
-            foreach(QString filename, tmp_line.split("\n")){
+            string tmp_line;
+            ftp->List(QString("student/" + num_class.left(num_class.size() - 1) + "/ready_tasks/").toStdString(), tmp_line);
+            foreach(QString filename, QString().fromStdString(tmp_line).split("\n")){
+                filename = "student/" + num_class.left(num_class.size() - 1) + "/ready_tasks/" + filename;
                 if(filename.split("$").size() == 3 && filename.split("$")[2][num_class.left(num_class.size() - 1).size()] == Translit->toTranslit(num_class.right(1))){
                     list += filename;
                 }
             }
-            file.close();
         }
     }
     //qWarning() << list;
     ui->ready_tasks_list->clear();
     foreach(QString filename, list){
-        ftp->Get((tmp_path + "/" + filename.split("/").takeLast()).toLocal8Bit(), filename.toLocal8Bit(), ftplib::image);
+        ftp->DownloadFile((tmp_path + "/" + filename.split("/").takeLast()).toStdString(), filename.toStdString());
         QString task = filename.split("/").takeLast().split(".")[0];
         QListWidgetItem *newItem = new QListWidgetItem(ui->ready_tasks_list);
         newItem->setTextAlignment(Qt::AlignCenter);
@@ -620,20 +612,21 @@ void MainWindow::reconnectingFTP(){
             //******************
             //import files from ftp
             //******************
-            ftp->Connect("alexavr.ru:2121");
-            ftp->Login("u10", "10");
-            ftp->Get(QString(QDir::tempPath() + "/avatar_img.jpg").toLocal8Bit(), ("avatars/" + Translit->toTranslit(username.replace("\n", "_") + "_" + class_num) + ".jpg").toLocal8Bit().constData(), ftplib::image);
+            ftp->InitSession("alexavr.ru", 2121, "u10", "10");
+            //ftp->Connect("alexavr.ru:2121");
+            //ftp->Login("u10", "10");
+            ftp->DownloadFile(QString(QDir::tempPath() + "/avatar_img.jpg").toStdString(), ("avatars/" + Translit->toTranslit(username.replace("\n", "_") + "_" + class_num) + ".jpg").toStdString());
             ui->avatar->setPixmap(QPixmap(QString(QDir::tempPath() + "/avatar_img.jpg").toLocal8Bit()));
-
-            ftp->Nlst(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit(), "student/" + class_num.left(class_num.size() - 1).toLocal8Bit() + "/tasks/");
-            QString list;
+            string list;
+            ftp->List(QString("student/" + class_num.left(class_num.size() - 1).toLocal8Bit() + "/tasks/").toStdString(), list);
+            /*QString list;
             QFile file;
             file.setFileName(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit());
             file.open(QIODevice::ReadOnly | QIODevice::Text);
             list = file.readAll();
-            file.close();
+            file.close();*/
             QFile json_file;
-            QStringList list_files = list.split('\n');
+            QStringList list_files = QString().fromStdString(list).split('\n');
             QString file_name;
             ui->menu_2->clear();
             ui->chat_viewer->blockSignals(true);
@@ -645,9 +638,10 @@ void MainWindow::reconnectingFTP(){
             ui->ready_tasks_list->hide();
             for(int i=0; i < list_files.size() - 1; i++)
             {
-                if(list_files.at(i).split('/').at(2) != "" && list_files.at(i).split('/').at(3).split('.')[0].endsWith(class_num.left(class_num.size() - 1) + "_" + Translit->toTranslit(class_num[class_num.size() - 1]))){
-                    file_name = list_files.at(i).split('/').at(3);
-                    ftp->Get((home_path + "/.СистемаЗачётов/" + file_name).toLocal8Bit().constData(), ("student/" + class_num.left(class_num.size() - 1) + "/tasks/" + file_name).toLocal8Bit().constData(), ftplib::image);
+                QString file = "student/" + class_num.left(class_num.size() - 1).toLocal8Bit() + "/tasks/" + list_files.at(i);
+                if(file.split('/').at(2) != "" && file.split('/').at(3).split('.')[0].endsWith(class_num.left(class_num.size() - 1) + "_" + Translit->toTranslit(class_num[class_num.size() - 1]))){
+                    file_name = file.split('/').at(3);
+                    ftp->DownloadFile((home_path + "/.СистемаЗачётов/" + file_name).toStdString(), ("student/" + class_num.left(class_num.size() - 1) + "/tasks/" + file_name).toStdString());
 
                     //******************
                     //import json
@@ -682,9 +676,8 @@ void MainWindow::reconnectingFTP(){
             //******************
             //import files from ftp
             //******************
-            ftp->Connect("alexavr.ru:2121");
-            ftp->Login("u10", "10");
-            ftp->Get(QString(QDir::tempPath() + "/avatar_img.jpg").toLocal8Bit(), ("avatars/teacher_" + Translit->toTranslit(username.replace("\n", "_")) + ".jpg").toLocal8Bit().constData(), ftplib::image);
+            ftp->InitSession("alexavr.ru", 2121, "u10", "10");
+            ftp->DownloadFile(QString(QDir::tempPath() + "/avatar_img.jpg").toStdString(), ("avatars/teacher_" + Translit->toTranslit(username.replace("\n", "_")) + ".jpg").toStdString());
             ui->avatar->setPixmap(QPixmap(QDir::tempPath() + "/avatar_img.jpg"));
             lessons = QJsonObject();
             ui->menu_2->clear();
@@ -696,22 +689,17 @@ void MainWindow::reconnectingFTP(){
             ui->answer_field->hide();
             ui->ready_tasks_list->hide();
             foreach(QString num_class, class_num.split(";")){
-                ftp->Nlst(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit(), "student/" + num_class.left(num_class.size() - 1).toLocal8Bit() + "/tasks/");
-                QString list;
-                QFile file;
-                file.setFileName(QString(QDir::tempPath() + "/ftp_output").toLocal8Bit());
-                file.open(QIODevice::ReadOnly | QIODevice::Text);
-                list = file.readAll();
-                file.close();
+                string list;
+                ftp->List(QString("student/" + num_class.left(num_class.size() - 1).toLocal8Bit() + "/tasks/").toStdString(), list);
                 QFile json_file;
-                QStringList list_files = list.split('\n');
+                QStringList list_files = QString().fromStdString(list).split('\n');
                 QString file_name;
-                //qWarning() << list_files;
                 for(int i=0; i < list_files.size() - 1; i++)
                 {
-                    if(list_files.at(i).split('/').at(2) != "" && list_files.at(i).split('/').at(3).split('.')[0].endsWith(num_class.left(num_class.size() - 1) + "_" + Translit->toTranslit(num_class[num_class.size() - 1]))){
-                        file_name = list_files.at(i).split('/').at(3);
-                        ftp->Get((home_path + "/.СистемаЗачётов/" + file_name).toLocal8Bit().constData(), ("student/" + num_class.left(num_class.size() - 1) + "/tasks/" + file_name).toLocal8Bit().constData(), ftplib::image);
+                    QString file = "student/" + num_class.left(num_class.size() - 1).toLocal8Bit() + "/tasks/" + list_files.at(i);
+                    if(file.split('/').at(2) != "" && file.split('/').at(3).split('.')[0].endsWith(num_class.left(num_class.size() - 1) + "_" + Translit->toTranslit(num_class[num_class.size() - 1]))){
+                        file_name = file.split('/').at(3);
+                        ftp->DownloadFile((home_path + "/.СистемаЗачётов/" + file_name).toStdString(), ("student/" + num_class.left(num_class.size() - 1) + "/tasks/" + file_name).toStdString());
 
                         //******************
                         //import json
@@ -869,7 +857,7 @@ void MainWindow::on_upload_btn_clicked()
                         }
                     }
                     writer.close();
-                    int code = ftp->Put(file_path.toLocal8Bit(), QString(person_type + "/" + class_num.left(class_num.size() - 1) + "/ready_tasks/" + file_path.split('/').takeLast()).toLocal8Bit(), ftplib::image);
+                    int code = ftp->UploadFile(file_path.toStdString(), QString(person_type + "/" + class_num.left(class_num.size() - 1) + "/ready_tasks/" + file_path.split('/').takeLast()).toStdString());
                     if(code == 1){
                         trayIcon->showMessage("Система зачётов", "Задание отправлено на проверку", QIcon(":/icons/pic/icon.png"));
                     } else{
@@ -888,20 +876,21 @@ void MainWindow::on_add_task_btn_clicked()
     if(current_lesson == ""){
         QMessageBox::critical(this, "Ошибка добавления задания", "Вы не выбрали урок. Создайте или выберите урок перед созданием задания");
     } else{
+        AddTaskDialog * dialog = new AddTaskDialog();
         QString num_class = current_lesson.split("_").takeLast();
         socket->connectToHost("alexavr.ru", 25555, QTcpSocket::ReadWrite);
         socket->waitForConnected();
         socket->write(QString("com://get_tasks " + encode(num_class, 0)).toLocal8Bit());
         socket->waitForReadyRead();
         QByteArray task_data = socket->readAll();
-        if(task_data == "" || task_data == "Error 404! Server not found!"){
-            QMessageBox::critical(this, "Ошибка добавления задания", "Связь с сервером Системы Тестов отсутствует");
-            return;
-        }
         socket->close();
-        AddTaskDialog * dialog = new AddTaskDialog();
-        foreach(QString task, QString(task_data).split("$")){
-            dialog->add_task(task.split("|")[1]);
+        if(task_data == "" || task_data == "Error 404! Server not found!"){
+            trayIcon->showMessage("Система зачётов", "Связь с сервером Системы Тестов отсутствует", QIcon(":/icons/pic/icon.png"));
+            dialog->remove_task(2);
+        } else{
+            foreach(QString task, QString(task_data).split("$")){
+                dialog->add_task(task.split("|")[1]);
+            }
         }
         int ans = dialog->exec();
         if(ans == QDialog::Accepted){
@@ -928,7 +917,7 @@ void MainWindow::on_add_task_btn_clicked()
                 file.open(QIODevice::WriteOnly);
                 file.write(QJsonDocument(lessons[current_lesson].toArray()).toJson(QJsonDocument::Indented));
                 file.close();
-                if(ftp->Put(filename.toLocal8Bit(), QString("student/" + current_lesson.split("_")[1] + "/tasks/" + filename.split('/').takeLast()).toLocal8Bit(), ftplib::image) != 0){
+                if(ftp->UploadFile(filename.toStdString(), QString("student/" + current_lesson.split("_")[1] + "/tasks/" + filename.split('/').takeLast()).toStdString())){
                     QListWidgetItem *newItem = new QListWidgetItem(ui->excercises);
                     newItem->setTextAlignment(Qt::AlignCenter);
                     newItem->setText(task[2]);
@@ -986,7 +975,7 @@ void MainWindow::on_add_lesson_clicked()
             file.open(QIODevice::WriteOnly);
             file.write(QJsonDocument(temp_tasks).toJson(QJsonDocument::Indented));
             file.close();
-            if(ftp->Put(filename.toLocal8Bit(), QString("student/" + new_lesson[1].left(new_lesson[1].size() - 1) + "/tasks/" + filename.split('/').takeLast()).toLocal8Bit(), ftplib::image) != 0){
+            if(ftp->UploadFile(filename.toStdString(), QString("student/" + new_lesson[1].left(new_lesson[1].size() - 1) + "/tasks/" + filename.split('/').takeLast()).toStdString())){
                 ui->menu_2->addAction(new_lesson[0] + "_" + new_lesson[1].left(new_lesson[1].size() - 1) + "_" + new_lesson[1].right(1));
             }
        }
@@ -1034,5 +1023,21 @@ void MainWindow::on_accept_mark_clicked()
 void MainWindow::on_about_triggered()
 {
     about_dialog->exec();
+}
+
+
+void MainWindow::on_remove_cash_triggered()
+{
+    QDir home(home_path + "/.СистемаЗачётов");
+    foreach(QFileInfo filename, home.entryInfoList()){
+        if(filename.isDir()){
+            home.rmdir(filename.fileName());
+        } else{
+            home.remove(filename.fileName());
+        }
+    }
+    home.mkdir("tmp");
+    home.mkdir(".history");
+    trayIcon->showMessage("Система зачётов", "Кэш очищен", QIcon(":/icons/pic/icon.png"));
 }
 

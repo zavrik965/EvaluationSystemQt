@@ -7,12 +7,14 @@ QString Translitter::toTranslit(QString line)
 
     for(int i=0; i < line.size(); i++)
     {
-        if(line[i].isLower() && line[i].isLetter())
-        {
-            letter = translit_lower[russian_lower.indexOf(line[i])];
-        } else if(line[i].isUpper() && line[i].isLetter())
-        {
-            letter = translit_upper[russian_upper.indexOf(line[i])];
+        if(russian_upper.filter(line[i]).size() != 0 || russian_lower.filter(line[i]).size() != 0){
+            if(line[i].isLower() && line[i].isLetter())
+            {
+                letter = translit_lower[russian_lower.indexOf(line[i])];
+            } else if(line[i].isUpper() && line[i].isLetter())
+            {
+                letter = translit_upper[russian_upper.indexOf(line[i])];
+            }
         } else{
             letter = line[i];
         }

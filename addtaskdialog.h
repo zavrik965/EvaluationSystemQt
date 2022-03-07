@@ -21,6 +21,7 @@ private:
 public:
     QStringList get_task();
     void add_task(QString task);
+    void remove_task(int task);
 private slots:
     void on_task_type_currentIndexChanged(int index);
 };

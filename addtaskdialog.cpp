@@ -36,6 +36,10 @@ void AddTaskDialog::add_task(QString task){
     ui->task_list->addItem(task);
 }
 
+void AddTaskDialog::remove_task(int task){
+    ui->task_type->removeItem(task);
+}
+
 void AddTaskDialog::on_task_type_currentIndexChanged(int index)
 {
     if(index == 1){

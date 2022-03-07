@@ -652,6 +652,7 @@ p, li { white-space: pre-wrap; }
     </property>
     <addaction name="menu_settings"/>
     <addaction name="separator"/>
+    <addaction name="remove_cash"/>
     <addaction name="reconnect"/>
     <addaction name="change_theme"/>
     <addaction name="tray_access_btn"/>
@@ -729,6 +730,11 @@ p, li { white-space: pre-wrap; }
   <action name="reconnect">
    <property name="text">
     <string>Переподключение</string>
+   </property>
+  </action>
+  <action name="remove_cash">
+   <property name="text">
+    <string>Очистить кэш</string>
    </property>
   </action>
  </widget>

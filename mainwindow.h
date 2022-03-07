@@ -4,7 +4,7 @@
 #include <QMainWindow>
 #include <QSystemTrayIcon>
 #include <QCloseEvent>
-#include <ftplib.h>
+#include "FTPClient.h"
 #include <QString>
 #include <QFile>
 #include <QTextStream>
@@ -58,9 +58,9 @@ private:
     QString tmp_path = home_path + "/.СистемаЗачётов/tmp";
 
     QTimer *timer;
-    ftplib *ftp = new ftplib();
+    CFTPClient * ftp = new CFTPClient();
     int index_theme=1;
-    QString sh(string command)
+    /*QString sh(string command)
     {
         string end = " > /tmp/sh_output ";
         char com[command.size() + end.size()];
@@ -82,7 +82,7 @@ private:
         }
         file.close();
         return "";
-    }
+    }*/
     QStringList text_types = QStringList({".txt", ".tex", ".text", ".log", ".apt", ".ttf", ".err", ".sub", ".rtf", ".py", ".cpp", ".c", ".pas", ".html", ".json"});
     QJsonArray lessons_data;
     QJsonObject lessons;
@@ -127,5 +127,6 @@ private slots:
     void on_answer_field_anchorClicked(const QUrl &arg1);
     void on_accept_mark_clicked();
     void on_about_triggered();
+    void on_remove_cash_triggered();
 };
 #endif // MAINWINDOW_H
