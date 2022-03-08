@@ -90,7 +90,6 @@ private:
     QString current_lesson="";
     QString current_excersise="";
     QString current_description="";
-    QString current_answer_text="";
     QStringList current_needed_files = {};
 
     QTcpSocket *sock_send = new QTcpSocket();
