@@ -127,5 +127,6 @@ private slots:
     void on_accept_mark_clicked();
     void on_about_triggered();
     void on_remove_cash_triggered();
+    void on_help_triggered();
 };
 #endif // MAINWINDOW_H

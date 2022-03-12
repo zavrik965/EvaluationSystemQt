@@ -10,6 +10,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QProcess>
+#include <QDesktopServices>
 #include "QtGui/private/qzipreader_p.h"
 #include "QtGui/private/qzipwriter_p.h"
 #include "logindialog.h"
@@ -1097,5 +1098,11 @@ void MainWindow::on_remove_cash_triggered()
     QDir::home().mkpath(home_path + "/.СистемаЗачётов/tmp");
     QDir::home().mkpath(home_path + "/.СистемаЗачётов/.history");
     trayIcon->showMessage("Система зачётов", "Кэш очищен", QIcon(":/icons/pic/icon.png"));
+}
+
+
+void MainWindow::on_help_triggered()
+{
+    QDesktopServices::openUrl(QUrl("https://github.com/zavrik965/EvaluationSystemQt/wiki/%D0%A1%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D0%B0-%D0%97%D0%B0%D1%87%D1%91%D1%82%D0%BE%D0%B2"));
 }
 
