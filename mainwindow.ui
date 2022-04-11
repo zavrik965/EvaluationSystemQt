@@ -650,8 +650,6 @@ p, li { white-space: pre-wrap; }
     <property name="title">
      <string>Настройки</string>
     </property>
-    <addaction name="menu_settings"/>
-    <addaction name="separator"/>
     <addaction name="remove_cash"/>
     <addaction name="reconnect"/>
     <addaction name="change_theme"/>

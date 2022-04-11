@@ -326,14 +326,28 @@ void MainWindow::on_excercises_currentRowChanged(int currentRow)
                 file.close();
             }
         } else if(finfo.isFile() && finfo.suffix() == "json"){
-            QFile json;
-            QString val;
-            json.setFileName(home_path + "/.СистемаЗачётов/.history/" + name);
-            json.open(QIODevice::ReadOnly |QIODevice::Text);
-            val = json.readAll();
-            json.close();
-            QJsonDocument d = QJsonDocument::fromJson(val.toUtf8());
-            //qWarning() << d;
+            if(name.split('_').size() > 1 && name.split('_')[2].split('@')[0].replace("_", "") == Translit->toTranslit(num_class) && name.split('@')[1].split('.')[0] == lesson.replace(" ", "_")){
+                QFile json;
+                QString val;
+                json.setFileName(home_path + "/.СистемаЗачётов/.history/" + name);
+                json.open(QIODevice::ReadOnly |QIODevice::Text);
+                val = json.readAll();
+                json.close();
+                QJsonDocument d = QJsonDocument::fromJson(val.toUtf8());
+                //qWarning() << d;
+                foreach(QJsonValueRef raw_message, d.array()){
+                    QJsonObject message = raw_message.toObject();
+                    if(message["from"] == person_type + "_" + login + "_" + Translit->toTranslit(class_num).replace("_", "")){
+                        QListWidgetItem * mesItem = new QListWidgetItem(message["text"].toString());
+                        mesItem->setTextAlignment(Qt::AlignRight);
+                        ui->chat_viewer->addItem(mesItem);
+                    } else{
+                        QListWidgetItem * mesItem = new QListWidgetItem(message["text"].toString());
+                        mesItem->setTextAlignment(Qt::AlignLeft);
+                        ui->chat_viewer->addItem(mesItem);
+                    }
+                }
+            }
         }
     }
     QScrollBar *vb = ui->chat_viewer->verticalScrollBar();
@@ -602,10 +616,18 @@ void MainWindow::on_login_btn_triggered()
             login_flag = true;
             ui->reconnect->setVisible(true);
             delete login_form;
+            if(sock_send->ConnectedState){
+                sock_send->close();
+            }
+            if(sock->ConnectedState){
+                sock->close();
+            }
             connectToMessageServer();
             reconnectingFTP();
             connect(timer, SIGNAL(timeout()), this, SLOT(reconnectingFTP()));
             timer->start(120000);
+        } else{
+            QMessageBox::critical(this, "Ошибка аутентификации", "Вы ввели неверный пароль или логин");
         }
         socket->close();
         if(person_type == "teacher"){
@@ -800,68 +822,86 @@ void MainWindow::reconnectingFTP(){
 void MainWindow::reciver(){
     QByteArray data;
     QString user;
+    int id;
     QFile file;
-    QTime time = QTime::currentTime();
+    QDateTime time = QDateTime::currentDateTime();
+    QString strtime = time.toString("dd.MM.yyyy hh:mm:ss");
     data = sock->readAll();
     //qWarning() << data;
     if(data != "ping@!#"){
         qWarning() << data;
         data = data.replace("#$#", "\n");
-        user = data.split('%')[0];
+        id = data.split(';')[0].toInt();
+        user = data.split('%')[0].split(';')[1];
         user = user.sliced(0, user.size() - 1);
         QString lesson = data.split('%')[1];
         lesson = lesson.sliced(1, lesson.size() - 2);
         if(data.split('%').size() >= 3){
             //qWarning() << home_path + "/.СистемаЗачётов/.history/chat_" + user + "_" + lesson + ".hs";
-            file.setFileName(home_path + "/.СистемаЗачётов/.history/chat_" + user + "_" + lesson + ".hs");
-            file.open(QIODevice::Append | QIODevice::Text);
+            file.setFileName(home_path + "/.СистемаЗачётов/.history/chat_" + lesson + ".json");
+            file.open(QIODevice::ReadOnly | QIODevice::Text);
 
-            file.write(QString(time.toString("hh:mm:ss") + ":&" + data.sliced(user.size() + lesson.size() + 7).replace('\n', "#$#") + "\n").toLocal8Bit());
-            if(!lock && ui->excercises->count() != 0 && ui->excercises->currentItem()){
-                if(!lock && lesson.split('@')[0] == Translit->toTranslit(current_lesson) && lesson.split('@')[1].replace("_", " ") == Translit->toTranslit(ui->excercises->currentItem()->text())){
-                    //qWarning() << Translit->toTranslit(ui->excercises->currentItem()->text()) << Translit->toTranslit(current_lesson) << lesson.split('@')[1].replace("_", " ") << lesson.split('@')[0];
-                    ui->chat_viewer->addItem("[" + time.toString("hh:mm:ss") + "] " + user + ": " + data.sliced(user.size() + lesson.size() + 7));
-                }else {
-                    trayIcon->showMessage("Система зачётов", "Новое сообщение от пользователя " + Translit->fromTranslit(user.split("_")[1]), QIcon(":/icons/pic/icon.png"));
-                }
-            } else {
-                trayIcon->showMessage("Система зачётов", "Новое сообщение от пользователя " + Translit->fromTranslit(user.split("_")[1]), QIcon(":/icons/pic/icon.png"));
+//            file.write(QString(time.toString("hh:mm:ss") + ":&" + data.sliced(user.size() + lesson.size() + 7).replace('\n', "#$#") + "\n").toLocal8Bit());
+//            if(!lock && ui->excercises->count() != 0 && ui->excercises->currentItem()){
+//                if(!lock && lesson.split('@')[0] == Translit->toTranslit(current_lesson) && lesson.split('@')[1].replace("_", " ") == Translit->toTranslit(ui->excercises->currentItem()->text())){
+//                    //qWarning() << Translit->toTranslit(ui->excercises->currentItem()->text()) << Translit->toTranslit(current_lesson) << lesson.split('@')[1].replace("_", " ") << lesson.split('@')[0];
+//                    ui->chat_viewer->addItem("[" + time.toString("hh:mm:ss") + "] " + user + ": " + data.sliced(user.size() + lesson.size() + 7));
+//                }else {
+//                    trayIcon->showMessage("Система зачётов", "Новое сообщение от пользователя " + Translit->fromTranslit(user.split("_")[1]), QIcon(":/icons/pic/icon.png"));
+//                }
+//            } else {
+//                trayIcon->showMessage("Система зачётов", "Новое сообщение от пользователя " + Translit->fromTranslit(user.split("_")[1]), QIcon(":/icons/pic/icon.png"));
+//            }
+            QString val = file.readAll();
+            file.close();
+            QString text = data.sliced(QString().number(id).size() + user.size() + lesson.size() + 9);
+            QJsonObject message{{"id", id}, {"type", "text_message"}, {"from", user}, {"task", lesson}, {"time", strtime}, {"text", text}};
+            file.setFileName(home_path + "/.СистемаЗачётов/.history/chat_" + lesson + ".json");
+            file.open(QIODevice::WriteOnly | QIODevice::Text);
+            if(val == ""){
+                file.write(QJsonDocument(message).toJson(QJsonDocument::Indented));
+            } else{
+                QJsonDocument messages = QJsonDocument::fromJson(val.toLocal8Bit());
+                file.write(QJsonDocument(messages.array() + message).toJson(QJsonDocument::Indented));
             }
+            file.close();
+            ui->chat_viewer->addItem(text);
         }
     }
-    file.close();
+
 }
 
 void MainWindow::sender(){
     if(sock_send->isOpen() && !ui->chat_viewer->isHidden()){
         //************
-        // add to file
+        // send to server
         //************
         QFile file;
-        QDir dir(home_path + "/.СистемаЗачётов/.history/");
-        QFileInfoList list = dir.entryInfoList();
-        QTime time = QTime::currentTime();
-        foreach (QFileInfo finfo, list) {
-            QString name = finfo.fileName();
-            if(name.split('_').size() >= 5) qWarning() << name << name.split('_')[4].split('@')[0] << Translit->toTranslit(current_lesson) << name.split('@')[1].split('.')[0].replace("_", " ") << Translit->toTranslit(current_excersise);
-            if(name.split('_').size() >= 5 && name.split('_')[3] == Translit->toTranslit(class_num) && name.split('_')[4].split('@')[0] == Translit->toTranslit(current_lesson) && name.split('@')[1].split('.')[0].replace("_", " ") == Translit->toTranslit(current_excersise)){
-                qWarning() << "[TO:" + name.split('_')[1] + "_" + name.split('_')[2] + "_" + name.split('_')[3] + "]&:&" + current_lesson + "@" + current_excersise + ":%:" + ui->message->toPlainText().replace('\n', "#$#");
-                sock_send->write(QString("[TO:" + name.split('_')[1] + "_" + name.split('_')[2] + "_" + name.split('_')[3] + "]&:&" + Translit->toTranslit(current_lesson) + "@" + Translit->toTranslit(current_excersise).replace(" ", "_") + ":%:" + ui->message->toPlainText().replace('\n', "#$#")).toLocal8Bit());
-                sock_send->waitForBytesWritten();
-                file.setFileName(home_path + "/.СистемаЗачётов/.history/" + name);
-                file.open(QIODevice::Append | QIODevice::Text);
-                file.write(QString("$IAM$" + time.toString("hh:mm:ss") + ":&:" + ui->message->toPlainText().replace('\n', "#$#") + "\n").toLocal8Bit());
-                file.waitForBytesWritten(1000);
-                file.close();
+        file.setFileName(home_path + "/.СистемаЗачётов/.history/chat_" + Translit->toTranslit(current_lesson) + "_" + Translit->toTranslit(class_num).replace("_", "") + "@" + Translit->toTranslit(current_excersise).replace(" ", "_") + ".json");
+        file.open(QIODevice::ReadOnly | QIODevice::Text);
+        QString val = file.readAll();
+        file.close();
+        QStringList take_persons;
+        take_persons += person_type + "_" + login + "_" + Translit->toTranslit(class_num).replace("_", "");
+        if(val != ""){
+            QJsonDocument d = QJsonDocument::fromJson(val.toLocal8Bit());
+            foreach(QJsonValueRef raw_message, d.array()){
+                QJsonObject message = raw_message.toObject();
+                if(take_persons.filter(message["from"].toString()).size() == 0 && message["from"].toString() != person_type + "_" + login + "_" + class_num){
+                    take_persons += message["from"].toString();
+                }
             }
+        } else {
+            trayIcon->showMessage("Система зачётов", "Временно система не может отправить сообщение", QIcon(":/icons/pic/icon.png"));
+            return;
         }
+        qWarning() << "[TO:" + take_persons.join("_") + "]&:&" + current_lesson + "_" + Translit->toTranslit(class_num).replace("_", "") + "@" + current_excersise + ":%:" + ui->message->toPlainText().replace('\n', "#$#");
+        sock_send->write(QString("[TO:" + take_persons.join(" ") + "]&:&" + Translit->toTranslit(current_lesson) + "_" + Translit->toTranslit(class_num).replace("_", "") + "@" + Translit->toTranslit(current_excersise).replace(" ", "_") + ":%:" + ui->message->toPlainText().replace('\n', "#$#")).toLocal8Bit());
+        sock_send->waitForBytesWritten();
+        ui->message->clear();
         //************
         // end
         //************
-        QListWidgetItem * mes = new QListWidgetItem(ui->message->toPlainText() + " [" + time.toString("hh:mm:ss") + "]");
-        mes->setTextAlignment(Qt::AlignRight);
-        ui->chat_viewer->addItem(mes);
-        ui->message->setText("");
     } else {
         trayIcon->showMessage("Система зачётов", "Нет соединения с сервером сообщений", QIcon(":/icons/pic/icon.png"));
     }
@@ -870,8 +910,8 @@ void MainWindow::sender(){
 
 void MainWindow::on_reconnect_triggered()
 {
-    //sock_send->write("disconnect");
-    //sock_send->waitForBytesWritten();
+    sock_send->write("disconnect");
+    sock_send->waitForBytesWritten();
     disconnect(sock, SIGNAL(readyRead()), this, SLOT(reciver()));
     sock_send->close();
     sock->close();

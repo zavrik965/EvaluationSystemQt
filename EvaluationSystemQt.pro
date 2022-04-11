@@ -17,6 +17,7 @@ SOURCES += \
     logindialog.cpp \
     main.cpp \
     mainwindow.cpp \
+    preferencedialog.cpp \
     translitter.cpp
 
 HEADERS += \
@@ -27,6 +28,7 @@ HEADERS += \
     addtaskdialog.h \
     logindialog.h \
     mainwindow.h \
+    preferencedialog.h \
     translitter.h
 
 FORMS += \
@@ -34,7 +36,8 @@ FORMS += \
     addlessondialog.ui \
     addtaskdialog.ui \
     logindialog.ui \
-    mainwindow.ui
+    mainwindow.ui \
+    preferencedialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
